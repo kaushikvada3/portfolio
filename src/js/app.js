@@ -118,24 +118,6 @@ gsap.ticker.lagSmoothing(0);
 
 requestAnimationFrame(raf);
 
-// Cursor Customization
-const cursorDot = document.querySelector('.cursor-dot');
-const cursorOutline = document.querySelector('.cursor-outline');
-
-if (cursorDot && cursorOutline) {
-  window.addEventListener('mousemove', (e) => {
-    const posX = e.clientX;
-    const posY = e.clientY;
-
-    cursorDot.style.left = `${posX}px`;
-    cursorDot.style.top = `${posY}px`;
-
-    cursorOutline.animate({
-      left: `${posX}px`,
-      top: `${posY}px`
-    }, { duration: 500, fill: "forwards" });
-  });
-}
 
 // Render Functions for Crystal Glass Aesthetic
 function renderProjects() {
@@ -570,41 +552,149 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load Displacement Map for Crystal Glass Filter
   const glassImage = document.getElementById('glass-map-image');
-  if (glassImage) {
-    // Use local asset for reliability
-    glassImage.setAttribute('href', 'assets/glass-map.png');
-  }
+  if (glassImage) glassImage.setAttribute('href', 'assets/glass-map.png');
 
   // Ensure Lenis is running
   requestAnimationFrame(raf);
 
-  // Render all content
+  // Render all content immediately (during preload = no jank)
   renderProjects();
   renderExperience();
   renderSkills();
   renderEducation();
 
-  initHoverEffects();
-
   if (window.feather) feather.replace();
 
-  // GSAP Animations - SIMPLIFIED
+  initHoverEffects();
+
+  // ── GSAP Plugin setup ──────────────────────────────────────────────────
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
 
-    // Parallax for gradient orbs
+    // Dual-orb parallax — both orbs scroll at different rates/directions
     gsap.to(".orb-1", {
-      scrollTrigger: {
-        trigger: ".hero",
-        start: "top top",
-        end: "bottom top",
-        scrub: 1
-      },
-      y: 200,
-      scale: 1.2
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.4 },
+      y: 180, x: 60, scale: 1.25
+    });
+    gsap.to(".orb-2", {
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.8 },
+      y: -120, x: -80, scale: 0.85
+    });
+
+    // ── Stat counter animation ───────────────────────────────────────────
+    document.querySelectorAll('.stat-number').forEach(el => {
+      const target = parseFloat(el.dataset.target);
+      const decimals = parseInt(el.dataset.decimals || '0');
+      const suffix = el.dataset.suffix || '';
+
+      const obj = { val: 0 };
+      gsap.to(obj, {
+        val: target,
+        duration: 1.8,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 88%',
+          once: true,
+        },
+        onUpdate() {
+          el.textContent = obj.val.toFixed(decimals) + suffix;
+        },
+        onComplete() {
+          el.textContent = target.toFixed(decimals) + suffix;
+        },
+      });
     });
   }
 
-  // Remove loading class
-  document.body.classList.remove('is-loading');
+  // ── Scroll reveal (IntersectionObserver) ───────────────────────────────
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal-item').forEach(el => revealObs.observe(el));
+
+  // ── Preloader dismiss ───────────────────────────────────────────────
+  function dismissPreloader() {
+    const preloader = document.getElementById('preloader');
+    if (!preloader) { document.body.classList.remove('is-loading'); return; }
+    preloader.classList.add('done');
+    setTimeout(() => {
+      preloader.style.display = 'none';
+      document.body.classList.remove('is-loading');
+      // Fire hero title reveal after preloader gone
+      runHeroReveal();
+    }, 650);
+  }
+
+  // ── Hero title reveal (whole-title fade+slide) ──────────────────────────
+  // Note: background-clip:text gradient breaks with display:inline-block char
+  // spans, so we animate the whole h1 instead — still looks premium.
+  function prepareHeroReveal() {
+    if (window.gsap) {
+      gsap.set('#hero-title', { y: 40, opacity: 0 });
+      gsap.set('.hero-sub, .hero-scholar, .hero-meta', { y: 24, opacity: 0 });
+    }
+  }
+
+  function runHeroReveal() {
+    if (window.gsap) {
+      gsap.to('#hero-title', {
+        y: 0, opacity: 1,
+        duration: 1.1,
+        ease: 'power4.out',
+      });
+      gsap.to('.hero-sub, .hero-scholar, .hero-meta', {
+        y: 0, opacity: 1,
+        duration: 0.8,
+        ease: 'power3.out',
+        stagger: 0.12,
+        delay: 0.45,
+      });
+    } else {
+      ['#hero-title', '.hero-sub', '.hero-scholar', '.hero-meta'].forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        });
+      });
+    }
+  }
+
+  prepareHeroReveal();
+
+
+
+  // ── Model-gated reveal ─────────────────────────────────────────────
+  function waitForModel() {
+    let dismissed = false;
+    function reveal() {
+      if (dismissed) return;
+      dismissed = true;
+      dismissPreloader();
+    }
+
+    const safetyTimer = setTimeout(reveal, 8000);
+
+    function tryHook() {
+      if (window.ChipViewer && typeof window.ChipViewer.onReady === 'function') {
+        window.ChipViewer.onReady(() => {
+          clearTimeout(safetyTimer);
+          reveal();
+        });
+      } else {
+        setTimeout(tryHook, 50);
+      }
+    }
+    tryHook();
+  }
+
+  waitForModel();
 });
+
+

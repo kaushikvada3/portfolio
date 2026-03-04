@@ -6,10 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kaushik Vada · RTL & VLSI Engineer</title>
 
-  <!-- Fonts: Inter & SF Pro emulation -->
+  <!-- Fonts: Syne (display headings) + Inter (body) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 
   <!-- Icons -->
   <script src="https://unpkg.com/feather-icons"></script>
@@ -31,6 +32,17 @@
 </head>
 
 <body class="is-loading">
+
+  <!-- Preloader — dismisses when 3D model is ready -->
+  <div id="preloader">
+    <div class="preloader-inner">
+      <div class="preloader-monogram">KV</div>
+      <div class="preloader-bar-wrap">
+        <div class="preloader-bar" id="preloader-bar"></div>
+      </div>
+      <div class="preloader-status" id="preloader-status">Initializing…</div>
+    </div>
+  </div>
 
   <!-- SVG filter kept for potential future use; not applied to backdrop-filter -->
   <svg style="display: none; position: absolute; width: 0; height: 0;"></svg>
@@ -63,12 +75,14 @@
         <canvas id="chip-canvas" aria-hidden="true"></canvas>
 
         <div class="container hero-content">
-          <span class="label-mono">Electrical Engineering · VLSI</span>
-          <h1 class="hero-title">Kaushik<br>Vada.</h1>
-          Specializing in RTL design, verification, and the complete ASIC physical flow—<br>
-          synthesis, floorplanning, P&R, and timing analysis.
-          <span style="display: block; margin-top: 24px;">Regents Scholar at UC Riverside.</span>
-          <div class="hero-meta">
+          <span class="label-mono reveal-item">Electrical Engineering · VLSI</span>
+          <h1 class="hero-title" id="hero-title">Kaushik<br>Vada.</h1>
+          <p class="hero-sub reveal-item">
+            I design silicon. RTL to GDSII — synthesis, floorplanning,<br>
+            place-and-route, timing closure, and physical verification.
+          </p>
+          <span class="hero-scholar reveal-item">Regents Scholar · UC Riverside · GPA 3.93</span>
+          <div class="hero-meta reveal-item">
             <a href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a>
             <span>•</span>
             <a href="tel:8583058647">858-305-8647</a>
@@ -78,18 +92,45 @@
         </div>
       </header>
 
+      <!-- Stats Strip -->
+      <section class="stats-strip">
+        <div class="container stats-grid">
+          <div class="stat-item reveal-item">
+            <span class="stat-number" data-target="3.93" data-decimals="2">0</span>
+            <span class="stat-label">GPA / 4.00</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item reveal-item">
+            <span class="stat-number" data-target="3" data-suffix="+">0</span>
+            <span class="stat-label">RTL Projects</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item reveal-item">
+            <span class="stat-number" data-target="5" data-suffix="+">0</span>
+            <span class="stat-label">EDA Tools</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item reveal-item">
+            <span class="stat-number" data-target="2" data-suffix="%">0</span>
+            <span class="stat-label">Top Regents Scholar</span>
+          </div>
+        </div>
+      </section>
+
       <!-- Qualifications/Profile Summary -->
       <section id="qualifications" class="section work-section">
         <div class="container">
-          <h2 class="section-title">Qualifications</h2>
-          <div class="liquidGlass-wrapper project-card-glass">
+          <h2 class="section-title reveal-item">About</h2>
+          <div class="liquidGlass-wrapper project-card-glass reveal-item">
             <div class="liquidGlass-text">
               <div class="project-card-content">
-                <span class="project-tech">Profile</span>
-                <h3>VLSI-Focused Electrical Engineering Student</h3>
-                <p>Student in electrical engineering with a VLSI focus, gaining experience in Verilog RTL design, FPGA
-                  development using Xilinx Vivado, and introductory ASIC flow experience including RTL synthesis and
-                  timing analysis using Synopsys Design Compiler and Synopsys VCS.</p>
+                <span class="project-tech">Background</span>
+                <h3>Building chips, one RTL module at a time.</h3>
+                <p>I'm an Electrical Engineering student at UC Riverside with a deep focus on VLSI design and computer
+                  architecture. My work spans the full ASIC flow — from writing synthesizable RTL in SystemVerilog to
+                  running timing analysis in Synopsys Design Compiler. I've verified complex cache hierarchies using
+                  Synopsys VCS and Verdi, prototyped processors on FPGAs with Xilinx Vivado, and designed analog
+                  circuits in Cadence Virtuoso. I don't just study VLSI — I build it.</p>
               </div>
             </div>
           </div>
@@ -99,7 +140,7 @@
       <!-- Education Section -->
       <section id="education" class="section exp-section">
         <div class="container">
-          <h2 class="section-title">Education</h2>
+          <h2 class="section-title reveal-item">Education</h2>
           <div id="education-list">
             <!-- Populated by app.js -->
           </div>
@@ -109,7 +150,7 @@
       <!-- Skills Section -->
       <section id="skills" class="section work-section">
         <div class="container">
-          <h2 class="section-title">Technical Skills</h2>
+          <h2 class="section-title reveal-item">Technical Skills</h2>
           <div class="skills-grid">
             <!-- Populated by app.js -->
           </div>
@@ -119,7 +160,7 @@
       <!-- Projects Section -->
       <section id="projects" class="section work-section">
         <div class="container">
-          <h2 class="section-title">Projects</h2>
+          <h2 class="section-title reveal-item">Projects</h2>
           <div class="project-list" id="project-list">
             <!-- Populated by app.js -->
           </div>
@@ -131,7 +172,7 @@
         <div class="container">
           <div class="split-layout">
             <div class="sticky-side">
-              <h2 class="section-title">Experience</h2>
+              <h2 class="section-title reveal-item">Experience</h2>
             </div>
             <div class="content-side" id="exp-list">
               <!-- Populated by app.js -->

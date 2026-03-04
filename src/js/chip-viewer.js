@@ -9,21 +9,35 @@ const LAYER_COLORS = [
 
 function colorForName(name) {
   const n = (name || '').toLowerCase();
-  if (n.includes('via')  || n.includes('contact'))                          return 0xf06292;
-  if (n.includes('pad')  || n.includes('bond'))                             return 0xffd54f;
-  if (n.includes('sub')  || n.includes('bulk')  || n.includes('die'))       return 0x546e7a;
-  if (n.includes('m1')   || n.includes('metal1')  || n.includes('metal_1')) return 0x4fc3f7;
-  if (n.includes('m2')   || n.includes('metal2')  || n.includes('metal_2')) return 0xba68c8;
-  if (n.includes('m3')   || n.includes('metal3')  || n.includes('metal_3')) return 0x4db6ac;
-  if (n.includes('m4')   || n.includes('metal4')  || n.includes('metal_4')) return 0xff8a65;
+  if (n.includes('via') || n.includes('contact')) return 0xf06292;
+  if (n.includes('pad') || n.includes('bond')) return 0xffd54f;
+  if (n.includes('sub') || n.includes('bulk') || n.includes('die')) return 0x546e7a;
+  if (n.includes('m1') || n.includes('metal1') || n.includes('metal_1')) return 0x4fc3f7;
+  if (n.includes('m2') || n.includes('metal2') || n.includes('metal_2')) return 0xba68c8;
+  if (n.includes('m3') || n.includes('metal3') || n.includes('metal_3')) return 0x4db6ac;
+  if (n.includes('m4') || n.includes('metal4') || n.includes('metal_4')) return 0xff8a65;
   return null;
 }
 
 // ── Model cache ───────────────────────────────────────────────────────────────
-let _model    = null;
-let _loading  = true;
+let _model = null;
+let _loading = true;
 let _progress = 0;
-let _waiters  = [];   // attach callbacks queued while model is in-flight
+let _waiters = [];   // attach callbacks queued while model is in-flight
+let _readyCallbacks = [];   // preloader dismiss callbacks
+
+// ── Preloader helpers ─────────────────────────────────────────────────────────
+function _setPreloaderProgress(pct) {
+  const bar = document.getElementById('preloader-bar');
+  const status = document.getElementById('preloader-status');
+  if (bar) bar.style.width = pct + '%';
+  if (status) status.textContent = pct < 100 ? `Loading model… ${pct}%` : 'Ready';
+}
+
+function _fireReady() {
+  _readyCallbacks.forEach(fn => fn());
+  _readyCallbacks = [];
+}
 
 // ── Worker-based preload ──────────────────────────────────────────────────────
 // The Web Worker handles fetch + parse entirely off the main thread.
@@ -45,17 +59,20 @@ let _waiters  = [];   // attach callbacks queued while model is in-flight
   worker.onmessage = ({ data }) => {
     if (data.type === 'progress') {
       _progress = data.pct;
+      _setPreloaderProgress(_progress);
       // Live-update loading text if the modal is already open
       document.querySelectorAll('.chip-loading').forEach((el) => {
         if (el.style.display !== 'none') el.textContent = `Loading… ${_progress}%`;
       });
 
     } else if (data.type === 'done') {
-      _model   = _buildGroup(data.meshes);
+      _model = _buildGroup(data.meshes);
       _loading = false;
+      _setPreloaderProgress(100);
       _waiters.forEach(fn => fn(_model, null));
       _waiters = [];
       worker.terminate();
+      _fireReady();
 
     } else if (data.type === 'error') {
       console.warn('[ChipViewer] worker parse failed, trying inline:', data.message);
@@ -63,6 +80,8 @@ let _waiters  = [];   // attach callbacks queued while model is in-flight
       worker.terminate();
       // If anyone is waiting, fall back inline for them
       if (_waiters.length) _fallbackLoad();
+      // Still reveal the site even on error
+      _fireReady();
     }
   };
 
@@ -86,23 +105,26 @@ function _fallbackLoad() {
     fetch(fbxUrl)
       .then(r => r.arrayBuffer())
       .then(buf => {
-        const raw    = new FBXLoader().parse(buf, '');
-        const box    = new THREE.Box3().setFromObject(raw);
+        const raw = new FBXLoader().parse(buf, '');
+        const box = new THREE.Box3().setFromObject(raw);
         const center = box.getCenter(new THREE.Vector3());
-        const size   = box.getSize(new THREE.Vector3());
-        const s      = 3 / Math.max(size.x, size.y, size.z);
+        const size = box.getSize(new THREE.Vector3());
+        const s = 3 / Math.max(size.x, size.y, size.z);
         raw.scale.setScalar(s);
         raw.position.set(-center.x * s, -center.y * s, -center.z * s);
         _applyColors(raw);
-        _model   = raw;
+        _model = raw;
         _loading = false;
+        _setPreloaderProgress(100);
         _waiters.forEach(fn => fn(_model, null));
         _waiters = [];
+        _fireReady();
       })
       .catch(err => {
         _loading = false;
         _waiters.forEach(fn => fn(null, err));
         _waiters = [];
+        _fireReady();
       });
   });
 }
@@ -127,10 +149,10 @@ function _buildGroup(meshDataList) {
 
     const hex = colorForName(m.name) ?? LAYER_COLORS[idx % LAYER_COLORS.length];
     const mat = new THREE.MeshPhongMaterial({
-      color:    new THREE.Color(hex),
+      color: new THREE.Color(hex),
       shininess: 60,
       specular: new THREE.Color(0x333333),
-      side:     THREE.DoubleSide,
+      side: THREE.DoubleSide,
     });
 
     const mesh = new THREE.Mesh(geo, mat);
@@ -163,14 +185,14 @@ class ChipViewer {
 
   _clear() {
     this.scene = this.camera = this.renderer =
-    this.controls = this._rafId = this._onResize = this._onVis = null;
+      this.controls = this._rafId = this._onResize = this._onVis = null;
   }
 
   init(container) {
     if (!container) return;
 
     const mobile = window.matchMedia('(max-width: 768px)').matches ||
-                   ('ontouchstart' in window && window.innerWidth < 1024);
+      ('ontouchstart' in window && window.innerWidth < 1024);
 
     // Scene
     this.scene = new THREE.Scene();
@@ -188,19 +210,19 @@ class ChipViewer {
     });
     this.renderer.setSize(w, h);
     this.renderer.setPixelRatio(mobile ? 1 : Math.min(window.devicePixelRatio, 1.5));
-    this.renderer.toneMapping      = THREE.NoToneMapping;
+    this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(this.renderer.domElement);
 
     // Controls
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.enableDamping   = true;
-    this.controls.dampingFactor   = 0.08;
-    this.controls.autoRotate      = true;
+    this.controls.enableDamping = true;
+    this.controls.dampingFactor = 0.08;
+    this.controls.autoRotate = true;
     this.controls.autoRotateSpeed = 0.6;
-    this.controls.enablePan       = !mobile;
-    this.controls.minDistance     = 0.5;
-    this.controls.maxDistance     = 15;
+    this.controls.enablePan = !mobile;
+    this.controls.minDistance = 0.5;
+    this.controls.maxDistance = 15;
     this.controls.target.set(0, 0, 0);
     this.controls.update();
 
@@ -212,10 +234,10 @@ class ChipViewer {
     });
 
     // Lighting
-    const key  = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(4, 8, 5);
+    const key = new THREE.DirectionalLight(0xffffff, 3.0); key.position.set(4, 8, 5);
     const fill = new THREE.DirectionalLight(0x88aaff, 1.5); fill.position.set(-5, 5, -3);
     const back = new THREE.DirectionalLight(0xffffff, 1.0); back.position.set(0, 3, -6);
-    const bot  = new THREE.DirectionalLight(0x6688cc, 0.6); bot.position.set(0, -5, 0);
+    const bot = new THREE.DirectionalLight(0x6688cc, 0.6); bot.position.set(0, -5, 0);
     this.scene.add(new THREE.AmbientLight(0xffffff, 1.8), key, fill, back, bot);
 
     // Attach model — instant if cached, queued otherwise
@@ -242,7 +264,7 @@ class ChipViewer {
     // Pause when tab is backgrounded
     this._onVis = () => {
       if (document.hidden) this._stopRender();
-      else                 this._startRender();
+      else this._startRender();
     };
     document.addEventListener('visibilitychange', this._onVis);
 
@@ -275,9 +297,9 @@ class ChipViewer {
 
   dispose() {
     this._stopRender();
-    if (this._onVis)    document.removeEventListener('visibilitychange', this._onVis);
+    if (this._onVis) document.removeEventListener('visibilitychange', this._onVis);
     if (this._onResize) window.removeEventListener('resize', this._onResize);
-    if (this.controls)  this.controls.dispose();
+    if (this.controls) this.controls.dispose();
     // Detach the cached group without destroying it — it's reused on re-open
     if (this.scene && _model) this.scene.remove(_model);
     if (this.renderer) { this.renderer.dispose(); this.renderer.domElement?.remove(); }
@@ -286,4 +308,13 @@ class ChipViewer {
   }
 }
 
-window.ChipViewer = new ChipViewer();
+const _chipViewerInstance = new ChipViewer();
+
+// Expose preloader integration API
+_chipViewerInstance.onReady = function (cb) {
+  if (!_loading) { cb(); return; }
+  _readyCallbacks.push(cb);
+};
+_chipViewerInstance.getProgress = function () { return _progress; };
+
+window.ChipViewer = _chipViewerInstance;
