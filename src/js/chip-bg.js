@@ -32,8 +32,9 @@
   let W, H;
 
   const PITCH = isLiteMode ? 30 : (isMobileViewport ? 26 : 22);
-  const TARGET_FPS = isLiteMode ? 18 : (isMobileViewport ? 24 : 30);
+  const TARGET_FPS = isLiteMode ? 20 : (isMobileViewport ? 30 : 36);
   const FRAME_MS = 1000 / TARGET_FPS;
+  const STATIC_PAD = isLiteMode ? 24 : 40;
 
   // EDA-style layer config
   const LAYER = [
@@ -61,6 +62,8 @@
   let isRendering = false;
   let isHeroVisible = true;
   let lastFrameTime = 0;
+  let staticCanvas = null;
+  let staticCtx = null;
 
   // ── Resize ─────────────────────────────────────────────────────────────────
   function resize() {
@@ -75,6 +78,12 @@
     canvas.style.height = H + 'px';
     ctx.scale(dpr, dpr);
     buildLayout();
+  }
+
+  function ensureStaticCanvas() {
+    if (staticCanvas) return;
+    staticCanvas = document.createElement('canvas');
+    staticCtx = staticCanvas.getContext('2d');
   }
 
   // ── Build IC routing layout ─────────────────────────────────────────────────
@@ -157,6 +166,8 @@
         x += w;
       }
     }
+
+    buildStaticBackdrop();
   }
 
   // ── Mouse tracking for sophisticated Parallax Pan ────────────────────────
@@ -178,6 +189,90 @@
       `${parseInt(hex.slice(3, 5), 16)},` +
       `${parseInt(hex.slice(5, 7), 16)},` +
       `${Math.max(0, Math.min(1, a))})`;
+  }
+
+  function drawStaticBackdrop(targetCtx, offsetX, offsetY) {
+    targetCtx.lineWidth = 0.4;
+    targetCtx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    for (let x = -W; x <= W * 2; x += PITCH) {
+      targetCtx.beginPath();
+      targetCtx.moveTo(offsetX + x, offsetY - H);
+      targetCtx.lineTo(offsetX + x, offsetY + (H * 2));
+      targetCtx.stroke();
+    }
+    for (let y = -H; y <= H * 2; y += PITCH) {
+      targetCtx.beginPath();
+      targetCtx.moveTo(offsetX - W, offsetY + y);
+      targetCtx.lineTo(offsetX + (W * 2), offsetY + y);
+      targetCtx.stroke();
+    }
+
+    targetCtx.lineWidth = 0.5;
+    cellRects.forEach(cr => {
+      const fa = fade(cr.x + cr.w * 0.5);
+      const ao = fa * 0.12;
+      if (ao < 0.003) return;
+      targetCtx.strokeStyle = rgba('#ffffff', ao);
+      targetCtx.strokeRect(offsetX + cr.x + 0.5, offsetY + cr.y + 0.5, cr.w - 1, cr.h - 1);
+      if (!isLiteMode && !isMobileViewport && fa > 0.45 && cr.w > PITCH * 2.5) {
+        targetCtx.font = '5.5px "SF Mono", "Courier New", monospace';
+        targetCtx.fillStyle = rgba('#ffffff', fa * 0.25);
+        targetCtx.fillText(`(${cr.name})`, offsetX + cr.x + 3, offsetY + cr.y + cr.h - 3);
+      }
+    });
+
+    routes.forEach(rt => {
+      const isH = rt.li !== 1;
+      const cx = isH ? (rt.x1 + rt.x2) * 0.5 : rt.x;
+      const fa = fade(cx);
+      const a = fa * (rt.li === 3 ? 0.18 : 0.24);
+      if (a < 0.004) return;
+
+      targetCtx.strokeStyle = rgba('#ffffff', a);
+      targetCtx.lineWidth = LAYER[rt.li].lw;
+      targetCtx.beginPath();
+      if (isH) {
+        targetCtx.moveTo(offsetX + rt.x1, offsetY + rt.y);
+        targetCtx.lineTo(offsetX + rt.x2, offsetY + rt.y);
+      } else {
+        targetCtx.moveTo(offsetX + rt.x, offsetY + rt.y1);
+        targetCtx.lineTo(offsetX + rt.x, offsetY + rt.y2);
+      }
+      targetCtx.stroke();
+
+      if (!isLiteMode && !isMobileViewport && rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
+        targetCtx.font = '6px "SF Mono", "Courier New", monospace';
+        targetCtx.fillStyle = rgba('#ffffff', fa * 0.5);
+        targetCtx.fillText(`(${rt.label})`, offsetX + rt.x1 + 4, offsetY + rt.y - 2);
+      }
+    });
+
+    vias.forEach((v, index) => {
+      if (isMobileViewport && (index % 2 !== 0)) return;
+      const fa = fade(v.x);
+      if (fa < 0.08) return;
+      targetCtx.fillStyle = rgba('#ffffff', fa * 0.55);
+      targetCtx.fillRect(offsetX + v.x - 1.5, offsetY + v.y - 1.5, 3, 3);
+    });
+  }
+
+  function buildStaticBackdrop() {
+    ensureStaticCanvas();
+    const dpr = Math.min(devicePixelRatio, isLiteMode ? 1.2 : 1.5);
+    const width = W + (STATIC_PAD * 2);
+    const height = H + (STATIC_PAD * 2);
+
+    staticCanvas.width = width * dpr;
+    staticCanvas.height = height * dpr;
+    staticCanvas.style.width = width + 'px';
+    staticCanvas.style.height = height + 'px';
+
+    if (staticCtx.resetTransform) staticCtx.resetTransform();
+    else staticCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+    staticCtx.scale(dpr, dpr);
+    staticCtx.clearRect(0, 0, width, height);
+    drawStaticBackdrop(staticCtx, STATIC_PAD, STATIC_PAD);
   }
 
   function setRenderActive(shouldRender) {
@@ -210,71 +305,19 @@
 
     ctx.clearRect(0, 0, W, H);
 
-    // Apply ultra-smooth lerp for Apple-style parallax float
-    currentPanX += (targetPanX - currentPanX) * 0.04;
-    currentPanY += (targetPanY - currentPanY) * 0.04;
+    // More responsive easing than the previous syrup-heavy drag.
+    currentPanX += (targetPanX - currentPanX) * 0.08;
+    currentPanY += (targetPanY - currentPanY) * 0.08;
 
-    ctx.save();
-    ctx.translate(currentPanX, currentPanY);
-
-    // Background grid
-    ctx.lineWidth = 0.4;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
-    for (let x = -W; x <= W * 2; x += PITCH) {
-      ctx.beginPath(); ctx.moveTo(x, -H); ctx.lineTo(x, H * 2); ctx.stroke();
+    if (staticCanvas) {
+      ctx.drawImage(
+        staticCanvas,
+        Math.round(currentPanX - STATIC_PAD),
+        Math.round(currentPanY - STATIC_PAD),
+        staticCanvas.width / Math.min(devicePixelRatio, isLiteMode ? 1.2 : 1.5),
+        staticCanvas.height / Math.min(devicePixelRatio, isLiteMode ? 1.2 : 1.5)
+      );
     }
-    for (let y = -H; y <= H * 2; y += PITCH) {
-      ctx.beginPath(); ctx.moveTo(-W, y); ctx.lineTo(W * 2, y); ctx.stroke();
-    }
-
-    // Standard-cell outlines + labels
-    ctx.lineWidth = 0.5;
-    cellRects.forEach(cr => {
-      const fa = fade(cr.x + cr.w * 0.5);
-      const ao = fa * 0.12;
-      if (ao < 0.003) return;
-      ctx.strokeStyle = rgba('#ffffff', ao);
-      ctx.strokeRect(cr.x + 0.5, cr.y + 0.5, cr.w - 1, cr.h - 1);
-      if (!isLiteMode && !isMobileViewport && fa > 0.45 && cr.w > PITCH * 2.5) {
-        ctx.font = '5.5px "SF Mono", "Courier New", monospace';
-        ctx.fillStyle = rgba('#ffffff', fa * 0.25);
-        ctx.fillText(`(${cr.name})`, cr.x + 3, cr.y + cr.h - 3);
-      }
-    });
-
-    // Routing traces
-    routes.forEach(rt => {
-      const isH = rt.li !== 1;
-      const cx = isH ? (rt.x1 + rt.x2) * 0.5 : rt.x;
-      const fa = fade(cx);
-      const a = fa * (rt.li === 3 ? 0.18 : 0.24);
-      if (a < 0.004) return;
-
-      // Make all traces look like subtle metallic highlights
-      ctx.strokeStyle = rgba('#ffffff', a);
-      ctx.lineWidth = LAYER[rt.li].lw;
-      ctx.beginPath();
-      if (isH) { ctx.moveTo(rt.x1, rt.y); ctx.lineTo(rt.x2, rt.y); }
-      else { ctx.moveTo(rt.x, rt.y1); ctx.lineTo(rt.x, rt.y2); }
-      ctx.stroke();
-
-      if (!isLiteMode && !isMobileViewport && rt.label && rt.li === 0 && fa > 0.55 && (rt.x2 - rt.x1) > PITCH * 5) {
-        ctx.font = '6px "SF Mono", "Courier New", monospace';
-        ctx.fillStyle = rgba('#ffffff', fa * 0.5);
-        ctx.fillText(`(${rt.label})`, rt.x1 + 4, rt.y - 2);
-      }
-    });
-
-    // Via squares
-    vias.forEach((v, index) => {
-      if (isMobileViewport && (index % 2 !== 0)) return;
-      const fa = fade(v.x);
-      if (fa < 0.08) return;
-      ctx.fillStyle = rgba('#ffffff', fa * 0.55);
-      ctx.fillRect(v.x - 1.5, v.y - 1.5, 3, 3);
-    });
-
-    ctx.restore();
 
     // Occasional subtle glowing sweep line representing data processing
     scanElapsed += deltaSeconds;
@@ -300,16 +343,16 @@
 
   // ── Parallax Mouse Hooks ───────────────────────────────────────────────────
   const parent = canvas.parentElement;
-  parent.addEventListener('mousemove', e => {
+  parent.addEventListener('pointermove', e => {
     // Parallax moves slightly INVERSE to cursor for depth
     const r = canvas.getBoundingClientRect();
     const mx = e.clientX - r.left;
     const my = e.clientY - r.top;
 
-    // Max offset of 30px
-    targetPanX = ((W / 2) - mx) * 0.05;
-    targetPanY = ((H / 2) - my) * 0.05;
-  });
+    // Keep the motion tight and deliberate rather than floaty.
+    targetPanX = ((W / 2) - mx) * 0.038;
+    targetPanY = ((H / 2) - my) * 0.038;
+  }, { passive: true });
   parent.addEventListener('mouseleave', () => {
     targetPanX = 0;
     targetPanY = 0;

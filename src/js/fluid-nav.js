@@ -26,10 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const itemWidth = item.offsetWidth;
 
         if (animate) {
-            const duration = isClick ? '0.6s' : '0.35s';
+            const duration = isClick ? '0.48s' : '0.24s';
             const easing = isClick
-                ? 'cubic-bezier(0.34, 1.56, 0.64, 1)'
-                : 'cubic-bezier(0.22, 1, 0.36, 1)';
+                ? 'cubic-bezier(0.22, 1, 0.36, 1)'
+                : 'cubic-bezier(0.2, 0.9, 0.2, 1)';
             pill.style.transition = `transform ${duration} ${easing}, width ${duration} ${easing}`;
         } else {
             pill.style.transition = 'none';
@@ -54,15 +54,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Interpolate for heavy "syrup" lag feel (lower = heavier)
-        dragCurrentX += (dragTargetX - dragCurrentX) * 0.2;
+        // Keep drag responsive while preserving a slight elastic feel.
+        dragCurrentX += (dragTargetX - dragCurrentX) * 0.28;
 
         // Calculate squash and stretch based on velocity
         const velocity = dragTargetX - dragCurrentX;
         const absVelocity = Math.abs(velocity);
 
-        let stretchX = 1 + (absVelocity * 0.025); // Exaggerated drag stretch
-        stretchX = Math.min(stretchX, 1.7); // Higher max stretch cap
+        let stretchX = 1 + (absVelocity * 0.014);
+        stretchX = Math.min(stretchX, 1.28);
         let squashY = 1 / Math.sqrt(stretchX); // Maintain volume
 
         pill.style.transform = `translateX(${dragCurrentX}px) scale(${stretchX}, ${squashY})`;
@@ -188,27 +188,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             isAutoScrolling = true;
 
-            setTimeout(() => {
-                if (targetHref === '#') {
-                    if (window.lenis) {
-                        window.lenis.scrollTo(0, { onComplete: () => { isAutoScrolling = false; } });
-                    } else {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        setTimeout(() => { isAutoScrolling = false; }, 1000);
-                    }
+            if (targetHref === '#') {
+                if (window.lenis) {
+                    window.lenis.scrollTo(0, { onComplete: () => { isAutoScrolling = false; } });
                 } else {
-                    if (window.lenis && document.querySelector(targetHref)) {
-                        window.lenis.scrollTo(targetHref, {
-                            offset: -60,
-                            onComplete: () => { isAutoScrolling = false; }
-                        });
-                    } else {
-                        const targetE = document.querySelector(targetHref);
-                        if (targetE) targetE.scrollIntoView({ behavior: 'smooth' });
-                        setTimeout(() => { isAutoScrolling = false; }, 1000);
-                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    setTimeout(() => { isAutoScrolling = false; }, 1000);
                 }
-            }, 50);
+            } else {
+                if (window.lenis && document.querySelector(targetHref)) {
+                    window.lenis.scrollTo(targetHref, {
+                        offset: -60,
+                        onComplete: () => { isAutoScrolling = false; }
+                    });
+                } else {
+                    const targetE = document.querySelector(targetHref);
+                    if (targetE) targetE.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => { isAutoScrolling = false; }, 1000);
+                }
+            }
         };
 
         if (didDrag) {

@@ -224,12 +224,14 @@ h4 {
   display: flex;
   font-weight: 600;
   overflow: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 
   background: rgba(255, 255, 255, 0.06);
 
   /* GPU-accelerated blur — no SVG filter, no per-frame software rasterisation */
-  backdrop-filter: blur(14px) saturate(180%) brightness(1.04);
-  -webkit-backdrop-filter: blur(14px) saturate(180%) brightness(1.04);
+  backdrop-filter: blur(12px) saturate(170%) brightness(1.03);
+  -webkit-backdrop-filter: blur(12px) saturate(170%) brightness(1.03);
 
   border: 1px solid rgba(255, 255, 255, 0.10);
 
@@ -240,7 +242,7 @@ h4 {
     inset 0 1px 1px rgba(255, 255, 255, 0.4),
     inset 0 -1px 1px rgba(0, 0, 0, 0.2);
 
-  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Top-left specular highlight */
@@ -257,7 +259,7 @@ h4 {
 }
 
 .liquidGlass-wrapper:hover {
-  transform: translateY(-4px) scale(1.008);
+  transform: translateY(-3px) scale(1.004);
   background: rgba(255, 255, 255, 0.10);
   border-color: rgba(255, 255, 255, 0.20);
   box-shadow:
@@ -537,6 +539,9 @@ h4 {
   z-index: 0;
   opacity: 0.15;
   /* Boosted visibility while retaining Apple minimal contrast */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  contain: paint;
 }
 
 /* Hero */
@@ -554,14 +559,17 @@ h4 {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  contain: paint;
 }
 
 .gradient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(140px);
+  filter: blur(120px);
   /* Massive Apple-style blur for ambient lighting */
   opacity: 0.35;
+  transform: translateZ(0);
+  will-change: transform, opacity;
 }
 
 .orb-1 {
@@ -677,7 +685,7 @@ h4 {
   color: #ccc;
   text-decoration: none;
   border-bottom: 1px solid transparent;
-  transition: all 0.3s ease;
+  transition: color 0.24s ease, border-color 0.24s ease;
 }
 
 .hero-meta a:hover {
@@ -707,6 +715,7 @@ h4 {
   font-size: 0.62rem;
   transition: opacity 0.35s ease, transform 0.35s ease, color 0.35s ease;
   animation: scrollHintFloat 1.8s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 .scroll-indicator svg {
@@ -817,7 +826,7 @@ h4 {
   text-decoration: none;
   font-weight: 500;
   font-size: 1.1rem;
-  transition: all 0.3s ease;
+  transition: color 0.24s ease, transform 0.24s ease;
   position: relative;
 }
 
@@ -861,7 +870,7 @@ h4 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  transition: all 0.35s cubic-bezier(0.19, 1, 0.22, 1);
+  transition: background 0.28s cubic-bezier(0.19, 1, 0.22, 1), border-color 0.28s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.28s cubic-bezier(0.19, 1, 0.22, 1), transform 0.28s cubic-bezier(0.19, 1, 0.22, 1), gap 0.28s cubic-bezier(0.19, 1, 0.22, 1);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -901,12 +910,12 @@ h4 {
 
 @media (max-width: 768px) {
   .liquidGlass-wrapper {
-    backdrop-filter: blur(10px) saturate(140%) brightness(1.02);
-    -webkit-backdrop-filter: blur(10px) saturate(140%) brightness(1.02);
+    backdrop-filter: blur(8px) saturate(140%) brightness(1.02);
+    -webkit-backdrop-filter: blur(8px) saturate(140%) brightness(1.02);
   }
 
   .gradient-orb {
-    filter: blur(96px);
+    filter: blur(80px);
     opacity: 0.24;
   }
 
@@ -1019,10 +1028,10 @@ h4 {
 /* Base state: hidden below */
 .reveal-item {
   opacity: 0;
-  transform: translateY(32px);
+  transform: translateY(24px);
   transition:
-    opacity 1.2s var(--ease-out-expo),
-    transform 1.2s var(--ease-out-expo);
+    opacity 0.9s var(--ease-out-expo),
+    transform 0.9s var(--ease-out-expo);
   will-change: opacity, transform;
 }
 
@@ -1055,5 +1064,5 @@ h4 {
 
 /* Section titles get a slightly different reveal */
 .section-title.reveal-item {
-  transform: translateY(24px);
+  transform: translateY(18px);
 }

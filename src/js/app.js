@@ -210,14 +210,14 @@ let lenis = null;
 
 if (!isLiteMode && typeof Lenis !== 'undefined') {
   lenis = new Lenis({
-    duration: 1.22,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    duration: 0.92,
+    easing: (t) => 1 - Math.pow(1 - t, 3.25),
     direction: 'vertical',
     gestureDirection: 'vertical',
     smooth: true,
-    mouseMultiplier: 0.9,
+    mouseMultiplier: 0.95,
     smoothTouch: false,
-    touchMultiplier: 1.55,
+    touchMultiplier: 1.2,
   });
   window.lenis = lenis;
 
@@ -960,27 +960,6 @@ function renderEducation() {
 }
 
 
-// Liquid Glass Hover Effects
-function initHoverEffects() {
-  document.querySelectorAll('.liquidGlass-wrapper').forEach(glass => {
-    glass.addEventListener('mouseenter', () => {
-      gsap.to(glass, {
-        scale: 1.02,
-        duration: 0.4,
-        ease: "power2.out"
-      });
-    });
-
-    glass.addEventListener('mouseleave', () => {
-      gsap.to(glass, {
-        scale: 1,
-        duration: 0.4,
-        ease: "power2.out"
-      });
-    });
-  });
-}
-
 // Init Content
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -996,19 +975,17 @@ document.addEventListener("DOMContentLoaded", () => {
   renderSkills();
   renderEducation();
 
-  initHoverEffects();
-
   // ── GSAP Plugin setup ──────────────────────────────────────────────────
   if (window.gsap && window.ScrollTrigger) {
     gsap.registerPlugin(ScrollTrigger);
 
     // Dual-orb parallax — both orbs scroll at different rates/directions
     gsap.to(".orb-1", {
-      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.4 },
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.05 },
       y: 180, x: 60, scale: 1.25
     });
     gsap.to(".orb-2", {
-      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.8 },
+      scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1.25 },
       y: -120, x: -80, scale: 0.85
     });
 
