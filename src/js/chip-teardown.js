@@ -12,7 +12,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 const gltfLoader = new GLTFLoader();
 const draco = new DRACOLoader();
-draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+const MODEL_URL = new URL('../../Two_Level_Cache_Draco.glb', import.meta.url).href;
+draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
 gltfLoader.setDRACOLoader(draco);
 
 let cachedGLTF = null;
@@ -46,7 +47,7 @@ function ensureGLTFLoaded() {
 
   gltfLoadPromise = new Promise((resolve, reject) => {
     gltfLoader.load(
-      'Two_Level_Cache_Draco.glb',
+      MODEL_URL,
       (gltf) => {
         cachedGLTF = gltf;
         resolve(gltf);
