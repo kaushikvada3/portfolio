@@ -613,8 +613,10 @@ async function openCacheModal() {
     loadingEl.classList.remove('is-hidden');
     loadingEl.textContent = 'Loading 3D teardown...';
   }
+  let loadedTeardownModule = null;
   loadTeardownModule()
     .then((mod) => {
+      loadedTeardownModule = mod;
       if (modalToken !== activeModalToken || !document.body.contains(overlay)) return false;
       return mod.initChipTeardown(modal);
     })
@@ -624,7 +626,12 @@ async function openCacheModal() {
       if (ready) {
         loadingEl.classList.add('is-hidden');
       } else {
-        loadingEl.textContent = '3D teardown unavailable';
+        const loadDetail = loadedTeardownModule && typeof loadedTeardownModule.getLastTeardownError === 'function'
+          ? loadedTeardownModule.getLastTeardownError()
+          : '';
+        const shortDetail = loadDetail ? ` (${loadDetail.slice(0, 96)})` : '';
+        loadingEl.textContent = `3D teardown unavailable${shortDetail}`;
+        if (loadDetail) loadingEl.title = loadDetail;
       }
     })
     .catch((err) => {

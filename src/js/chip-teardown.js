@@ -10,16 +10,24 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 /* global gsap, ScrollTrigger */
 gsap.registerPlugin(ScrollTrigger);
 
-const gltfLoader = new GLTFLoader();
-const draco = new DRACOLoader();
-const MODEL_URL_FULL = new URL('../../Two_Level_Cache_Draco.glb', import.meta.url).href;
-const MODEL_URL_LITE = new URL('../../Two_Level_Cache_Draco_Lite.glb', import.meta.url).href;
-draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/');
-gltfLoader.setDRACOLoader(draco);
+const ASSET_VERSION = '20260305-4';
+const MODEL_URL_FULL_LOCAL = new URL('../../Two_Level_Cache_Draco.glb', import.meta.url);
+MODEL_URL_FULL_LOCAL.searchParams.set('v', ASSET_VERSION);
+const MODEL_URL_LITE_LOCAL = new URL('../../Two_Level_Cache_Draco_Lite.glb', import.meta.url);
+MODEL_URL_LITE_LOCAL.searchParams.set('v', ASSET_VERSION);
+const MODEL_URL_FULL_RAW = `https://raw.githubusercontent.com/kaushikvada3/Personal-Portfolio/main/Two_Level_Cache_Draco.glb?v=${ASSET_VERSION}`;
+const MODEL_URL_LITE_RAW = `https://raw.githubusercontent.com/kaushikvada3/Personal-Portfolio/main/Two_Level_Cache_Draco_Lite.glb?v=${ASSET_VERSION}`;
+const DECODER_PATHS = [
+  'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/libs/draco/',
+  'https://unpkg.com/three@0.170.0/examples/jsm/libs/draco/',
+  'https://www.gstatic.com/draco/versioned/decoders/1.5.7/',
+];
 
 let cachedGLTF = null;
 let gltfLoadPromise = null;
 let selectedModelUrl = '';
+let selectedDecoderPath = '';
+let lastLoadError = '';
 
 let renderer = null;
 let scene = null;
@@ -63,46 +71,104 @@ function shouldUseLiteModel() {
   return lowMemory || lowCpu || smallViewport || saveData || slowNetwork;
 }
 
-function resolveModelUrl() {
-  if (selectedModelUrl) return selectedModelUrl;
-  selectedModelUrl = shouldUseLiteModel() ? MODEL_URL_LITE : MODEL_URL_FULL;
-  return selectedModelUrl;
+function getModelCandidates() {
+  const preferLite = shouldUseLiteModel();
+  if (preferLite) {
+    return [
+      MODEL_URL_LITE_LOCAL.href,
+      MODEL_URL_FULL_LOCAL.href,
+      MODEL_URL_LITE_RAW,
+      MODEL_URL_FULL_RAW,
+    ];
+  }
+  return [
+    MODEL_URL_FULL_LOCAL.href,
+    MODEL_URL_LITE_LOCAL.href,
+    MODEL_URL_FULL_RAW,
+    MODEL_URL_LITE_RAW,
+  ];
 }
 
-function loadModel(url) {
+function normalizeLoadError(err) {
+  if (!err) return 'unknown error';
+  if (typeof err === 'string') return err;
+  if (err && typeof err.message === 'string' && err.message.trim()) return err.message.trim();
+  if (err && err.target && typeof err.target.status === 'number') {
+    return `network status ${err.target.status}`;
+  }
+  return String(err);
+}
+
+function loadModel(url, decoderPath) {
   return new Promise((resolve, reject) => {
-    gltfLoader.load(
+    const loader = new GLTFLoader();
+    loader.setCrossOrigin('anonymous');
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath(decoderPath);
+    loader.setDRACOLoader(dracoLoader);
+
+    loader.load(
       url,
-      (gltf) => resolve(gltf),
+      (gltf) => {
+        dracoLoader.dispose();
+        resolve(gltf);
+      },
       undefined,
-      (err) => reject(err)
+      (err) => {
+        dracoLoader.dispose();
+        reject(err);
+      }
     );
   });
+}
+
+async function loadModelWithFallback() {
+  const candidates = getModelCandidates();
+  let lastErr = null;
+
+  for (const modelUrl of candidates) {
+    for (const decoderPath of DECODER_PATHS) {
+      try {
+        const gltf = await loadModel(modelUrl, decoderPath);
+        selectedModelUrl = modelUrl;
+        selectedDecoderPath = decoderPath;
+        console.info('[teardown] model loaded', { modelUrl: selectedModelUrl, decoderPath: selectedDecoderPath });
+        return gltf;
+      } catch (err) {
+        lastErr = err;
+        console.warn('[teardown] model load attempt failed', {
+          modelUrl,
+          decoderPath,
+          error: normalizeLoadError(err),
+        });
+      }
+    }
+  }
+
+  throw lastErr || new Error('No GLB source could be loaded');
 }
 
 function ensureGLTFLoaded() {
   if (cachedGLTF) return Promise.resolve(cachedGLTF);
   if (gltfLoadPromise) return gltfLoadPromise;
-  const modelUrl = resolveModelUrl();
+  lastLoadError = '';
 
-  gltfLoadPromise = loadModel(modelUrl)
-    .catch((err) => {
-      if (modelUrl === MODEL_URL_LITE) {
-        selectedModelUrl = MODEL_URL_FULL;
-        return loadModel(MODEL_URL_FULL);
-      }
-      throw err;
-    })
+  gltfLoadPromise = loadModelWithFallback()
     .then((gltf) => {
       cachedGLTF = gltf;
       return gltf;
     })
     .catch((err) => {
+      lastLoadError = normalizeLoadError(err);
       gltfLoadPromise = null;
       throw err;
     });
 
   return gltfLoadPromise;
+}
+
+export function getLastTeardownError() {
+  return lastLoadError;
 }
 
 export async function preloadChipTeardown() {
