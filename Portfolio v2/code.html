@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>KAUSHIK VADA // SILICON_LAB_V1.0</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Space+Grotesk:wght@300..700&amp;family=Space+Mono&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Three.js and GSAP for the exploded view -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#edf8ff",
+              "on-primary": "#004c5e",
+              "on-primary-fixed-variant": "#004c5d",
+              "surface-dim": "#0c0e12",
+              "tertiary-fixed-dim": "#c0dfee",
+              "on-surface-variant": "#a9abb0",
+              "on-secondary-fixed": "#064200",
+              "surface-variant": "#22262b",
+              "secondary-dim": "#2be800",
+              "on-background": "#f8f9fe",
+              "tertiary-fixed": "#ceedfd",
+              "primary": "#6dddff",
+              "on-secondary-container": "#e7ffd9",
+              "secondary-fixed": "#2ff801",
+              "on-tertiary-fixed-variant": "#466370",
+              "surface": "#0c0e12",
+              "error-dim": "#d7383b",
+              "primary-fixed-dim": "#00c3eb",
+              "on-secondary-fixed-variant": "#0d6200",
+              "tertiary-container": "#ceedfd",
+              "inverse-primary": "#00687e",
+              "error-container": "#9f0519",
+              "on-tertiary-container": "#3c5966",
+              "secondary": "#2ff801",
+              "primary-dim": "#00c3eb",
+              "secondary-fixed-dim": "#2be800",
+              "on-primary-container": "#004352",
+              "inverse-on-surface": "#535559",
+              "on-primary-fixed": "#002c37",
+              "surface-container-high": "#1c2025",
+              "surface-bright": "#282c32",
+              "tertiary-dim": "#c0dfee",
+              "outline-variant": "#46484c",
+              "on-surface": "#f8f9fe",
+              "on-error": "#490006",
+              "error": "#ff716c",
+              "surface-container-lowest": "#000000",
+              "surface-container": "#171a1e",
+              "primary-container": "#00d2fd",
+              "surface-tint": "#6dddff",
+              "on-tertiary-fixed": "#2a4753",
+              "surface-container-low": "#111417",
+              "on-error-container": "#ffa8a3",
+              "primary-fixed": "#00d2fd",
+              "inverse-surface": "#f8f9fe",
+              "secondary-container": "#106e00",
+              "on-secondary": "#0b5800",
+              "on-tertiary": "#45616f",
+              "outline": "#73757a",
+              "surface-container-highest": "#22262b",
+              "background": "#0c0e12"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "body": ["Space Grotesk", "sans-serif"],
+              "mono": ["Space Mono", "monospace"],
+              "label": ["Space Grotesk", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .liquid-glass {
+        background: linear-gradient(135deg, rgba(237, 248, 255, 0.08) 0%, rgba(237, 248, 255, 0.02) 100%);
+        backdrop-filter: blur(24px) saturate(180%);
+        border: 1px solid rgba(237, 248, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      .scale-shock-headline {
+        font-size: clamp(3.5rem, 10vw, 8rem);
+        line-height: 0.9;
+      }
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #1c2025; }
+
+      #webgl-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        background: #000;
+      }
+
+      .cad-grid {
+        position: fixed;
+        inset: 0;
+        background-image: 
+          linear-gradient(rgba(109, 221, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(109, 221, 255, 0.03) 1px, transparent 1px);
+        background-size: 100px 100px;
+        z-index: -1;
+      }
+
+      .scan-line {
+        position: fixed;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(to right, transparent, rgba(47, 248, 1, 0.1), transparent);
+        animation: scan 12s linear infinite;
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      @keyframes scan {
+        0% { transform: translateY(-100vh); }
+        100% { transform: translateY(100vh); }
+      }
+
+      .glow-border {
+        box-shadow: 0 0 15px rgba(109, 221, 255, 0.2);
+      }
+    </style>
+</head>
+<body class="bg-black text-on-surface font-body selection:bg-primary/30 selection:text-primary overflow-x-hidden">
+<canvas id="webgl-canvas"></canvas>
+<div class="cad-grid"></div>
+<div class="scan-line"></div>
+<!-- Technical HUD Overlay -->
+<div class="fixed inset-0 pointer-events-none z-50">
+<!-- Corner Brackets -->
+<div class="absolute top-8 left-8 w-12 h-12 border-t border-l border-primary/40"></div>
+<div class="absolute top-8 right-8 w-12 h-12 border-t border-r border-primary/40"></div>
+<div class="absolute bottom-8 left-8 w-12 h-12 border-b border-l border-primary/40"></div>
+<div class="absolute bottom-8 right-8 w-12 h-12 border-b border-r border-primary/40"></div>
+<!-- Real-time HUD Data -->
+<div class="absolute top-24 right-12 flex flex-col items-end font-mono text-[9px] text-primary/60 tracking-widest space-y-2">
+<div id="hud-scroll">SCROLL_Y: 0000px</div>
+<div id="hud-coord">CURSOR_X: ---</div>
+<div id="hud-wafer">WAFER_ID: 0x882_EXT</div>
+<div id="hud-temp">TEMP: 24.0°C</div>
+<div id="hud-status">ALIGNMENT: STABLE</div>
+<div class="flex gap-1 mt-4">
+<div class="w-1 h-3 bg-secondary animate-pulse"></div>
+<div class="w-1 h-3 bg-secondary/60"></div>
+<div class="w-1 h-3 bg-secondary/30"></div>
+</div>
+</div>
+<!-- Floating CAD Labels -->
+<div class="absolute bottom-24 left-12 font-mono text-[8px] text-primary/40 space-y-1">
+<div>// RECURSIVE_SUBDIVISION_LEVEL: 04</div>
+<div>// PHOTOLITHOGRAPHY_ALIGNED: TRUE</div>
+<div>// DOPING_CONC: 1.4E15 CM-3</div>
+</div>
+</div>
+<!-- TopAppBar Shell -->
+<header class="fixed top-0 w-full border-b-[0.5px] border-[#edf8ff]/10 bg-black/40 backdrop-blur-xl saturate-150 flex justify-between items-center px-8 py-4 z-[60]">
+<div class="text-2xl font-headline italic text-[#edf8ff] tracking-tight flex items-center gap-4">
+<span class="w-4 h-4 bg-primary animate-pulse"></span>
+        SILICON_LAB_V1.0
+    </div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#6dddff] border-b border-[#6dddff] pb-1 font-mono text-xs tracking-widest hover:text-[#2ff801] transition-all" href="#">CORE</a>
+<a class="text-[#edf8ff]/60 font-mono text-xs tracking-widest hover:text-[#2ff801] transition-all" href="#">ARCHIVE</a>
+<a class="text-[#edf8ff]/60 font-mono text-xs tracking-widest hover:text-[#2ff801] transition-all" href="#">LOGIC</a>
+<a class="text-[#edf8ff]/60 font-mono text-xs tracking-widest hover:text-[#2ff801] transition-all" href="#">GATES</a>
+</nav>
+<div class="flex items-center gap-6 text-[#6dddff]">
+<span class="material-symbols-outlined cursor-pointer hover:text-[#2ff801]">schedule</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-[#2ff801]">memory</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-[#2ff801]">terminal</span>
+</div>
+</header>
+<!-- SideNavBar Shell -->
+<aside class="fixed left-0 top-0 h-full w-16 border-r-[0.5px] border-[#edf8ff]/10 bg-black/20 backdrop-blur-2xl hidden md:flex flex-col items-center py-20 z-[60]">
+<div class="flex flex-col items-center gap-12">
+<div class="flex flex-col items-center group cursor-pointer text-[#2ff801] shadow-[0_0_15px_rgba(47,248,1,0.3)] scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">memory</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-mono mt-2">CORE</span>
+</div>
+<div class="flex flex-col items-center group cursor-pointer text-[#edf8ff]/30 hover:text-[#6dddff] transition-colors">
+<span class="material-symbols-outlined">settings_input_component</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-mono mt-2">CIRCUIT</span>
+</div>
+<div class="flex flex-col items-center group cursor-pointer text-[#edf8ff]/30 hover:text-[#6dddff] transition-colors">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-mono mt-2">LOGIC</span>
+</div>
+<div class="flex flex-col items-center group cursor-pointer text-[#edf8ff]/30 hover:text-[#6dddff] transition-colors">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-mono mt-2">TRACE</span>
+</div>
+</div>
+</aside>
+<main class="relative z-10" id="main-content">
+<!-- Hero Section -->
+<section class="min-h-screen flex flex-col justify-center px-8 md:px-24 pt-20 relative section-hero">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div class="order-2 lg:order-1">
+<div class="text-secondary font-mono text-xs tracking-[0.3em] mb-4 opacity-80 flex items-center gap-2">
+<span class="w-1.5 h-1.5 bg-secondary rounded-full animate-ping"></span>
+                    SYS_READY // AUTHENTICATED
+                </div>
+<h1 class="scale-shock-headline font-headline font-bold text-on-surface tracking-tighter mb-8">
+                    Kaushik <br/> <span class="italic text-primary font-light">Vada</span>
+</h1>
+<div class="flex flex-wrap gap-4 items-center">
+<div class="liquid-glass px-6 py-4 rounded-sm">
+<span class="font-mono text-primary text-sm uppercase tracking-widest">Architecting Silicon</span>
+</div>
+<div class="font-mono text-[10px] text-on-surface-variant max-w-xs leading-relaxed uppercase opacity-60">
+                        B.S. in Electrical Engineering. Specializing in high-performance RTL, Computer Architecture, and deep-submicron design flows.
+                    </div>
+</div>
+</div>
+<div class="order-1 lg:order-2 relative aspect-square group pointer-events-none">
+<!-- Visual Anchor for 3D Interaction -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-64 h-64 border border-primary/10 rounded-full animate-[spin_20s_linear_infinite]"></div>
+<div class="absolute w-48 h-48 border border-secondary/5 rounded-full animate-[spin_15s_linear_infinite_reverse]"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Project Section -->
+<section class="py-32 px-8 md:px-24 section-projects">
+<div class="flex flex-col md:flex-row justify-between items-end mb-20">
+<h2 class="font-headline text-5xl md:text-7xl italic font-light">The Silicon Foundry</h2>
+<div class="text-right font-mono text-[10px] text-primary tracking-widest opacity-60">
+                STAGED_PROJECTS // 0x01_FLUSH
+            </div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+<!-- Project Card 1 -->
+<div class="group relative liquid-glass p-0.5 rounded-sm overflow-hidden transition-all duration-500 hover:shadow-[0_0_30px_rgba(109,221,255,0.15)]">
+<div class="relative p-12 bg-black/80 h-full flex flex-col justify-between">
+<div class="absolute top-0 right-0 p-4 font-mono text-[8px] text-primary opacity-40">CAD_VIEW_TOP</div>
+<div>
+<span class="font-mono text-secondary text-[10px] tracking-widest">HW_ACCELERATOR</span>
+<h3 class="font-headline text-4xl mt-4 mb-6">Project Obsidian</h3>
+<p class="font-body text-on-surface-variant text-sm max-w-sm mb-8">
+                            Design of a custom RISC-V coprocessor for real-time ray-tracing calculations. Optimized for low-latency branch prediction.
+                        </p>
+<div class="flex gap-2">
+<span class="text-[9px] font-mono border border-primary/20 px-2 py-1 uppercase text-primary/60">Verilog</span>
+<span class="text-[9px] font-mono border border-primary/20 px-2 py-1 uppercase text-primary/60">FPGA</span>
+</div>
+</div>
+<div class="mt-12 group-hover:translate-x-2 transition-transform">
+<a class="text-primary font-mono text-xs tracking-widest flex items-center gap-2" href="#">
+                            VIEW_BITSTREAM <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="group relative liquid-glass p-0.5 rounded-sm overflow-hidden transition-all duration-500 hover:shadow-[0_0_30px_rgba(47,248,1,0.15)]">
+<div class="relative p-12 bg-black/80 h-full flex flex-col justify-between">
+<div class="absolute top-0 right-0 p-4 font-mono text-[8px] text-primary opacity-40">CAD_VIEW_ISO</div>
+<div>
+<span class="font-mono text-secondary text-[10px] tracking-widest">MEMORY_SUB_SYS</span>
+<h3 class="font-headline text-4xl mt-4 mb-6">Two-Level Cache RTL</h3>
+<p class="font-body text-on-surface-variant text-sm max-w-sm mb-8">
+                            Scalable non-inclusive cache hierarchy with MESI coherence protocol. Synthesized for 7nm CMOS with focus on leakage power.
+                        </p>
+<div class="flex gap-2">
+<span class="text-[9px] font-mono border border-primary/20 px-2 py-1 uppercase text-primary/60">SystemVerilog</span>
+<span class="text-[9px] font-mono border border-primary/20 px-2 py-1 uppercase text-primary/60">Genus</span>
+</div>
+</div>
+<div class="mt-12 group-hover:translate-x-2 transition-transform">
+<a class="text-primary font-mono text-xs tracking-widest flex items-center gap-2" href="#">
+                            ANALYZE_WAVEFORMS <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Experience: Career Pipeline -->
+<section class="py-32 px-8 md:px-24 section-experience">
+<div class="flex items-center gap-6 mb-20">
+<h2 class="font-headline text-5xl italic font-light">Career Pipeline</h2>
+<div class="flex-grow h-[1px] bg-primary/10"></div>
+</div>
+<div class="relative max-w-4xl mx-auto pl-12">
+<div class="absolute left-[1.35rem] top-0 bottom-0 w-[1px] bg-gradient-to-b from-primary via-secondary to-transparent"></div>
+<!-- Stage 1 -->
+<div class="relative mb-32 group">
+<div class="absolute -left-[1.75rem] top-2 w-4 h-4 rounded-full bg-primary shadow-[0_0_15px_rgba(109,221,255,1)]"></div>
+<div class="liquid-glass p-8 ml-8 group-hover:bg-primary/5 transition-all border-primary/30">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-mono text-[10px] text-primary tracking-widest uppercase mb-1 block">NODE_A // INCOMING</span>
+<h4 class="font-headline text-2xl">Implementation Eng. Intern @ ARM</h4>
+</div>
+<span class="font-mono text-xs text-on-surface-variant">JUNE 2026</span>
+</div>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed">
+                        Incoming Implementation Engineer Intern contributing to ARM's next-generation architectures and physical design methodologies.
+                    </p>
+</div>
+</div>
+<!-- Stage 2 -->
+<div class="relative mb-32 group">
+<div class="absolute -left-[1.75rem] top-2 w-4 h-4 rounded-full border border-primary bg-black group-hover:bg-primary transition-colors"></div>
+<div class="liquid-glass p-8 ml-8 transition-all border-primary/10">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="font-mono text-[10px] text-on-surface-variant tracking-widest uppercase mb-1 block">NODE_B // ARCHIVED</span>
+<h4 class="font-headline text-2xl">Hardware Design Intern @ DFT</h4>
+</div>
+<span class="font-mono text-xs text-on-surface-variant">SUMMER 2025</span>
+</div>
+<p class="font-body text-on-surface-variant text-sm leading-relaxed">
+                        Hardware Design Intern at Digital Force Technologies. Focused on RTL design, system integration, and advanced computing architectures.
+                    </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Terminal Section -->
+<section class="py-32 px-8 md:px-24">
+<div class="max-w-3xl mx-auto">
+<div class="bg-black/60 p-4 rounded-t-sm flex items-center justify-between border-x border-t border-primary/20 backdrop-blur-md">
+<div class="flex gap-2">
+<div class="w-2 h-2 rounded-full bg-error-dim"></div>
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+</div>
+<div class="font-mono text-[10px] tracking-widest text-primary/60 uppercase">COMM_PORT_SECURE</div>
+</div>
+<div class="bg-black/80 p-8 font-mono text-sm leading-relaxed border border-primary/20 min-h-[300px] shadow-2xl backdrop-blur-xl">
+<form class="space-y-6">
+<div class="relative">
+<label class="text-[10px] text-primary block mb-2 uppercase tracking-widest">Input_Subject</label>
+<input class="w-full bg-transparent border-b border-primary/30 py-2 outline-none text-secondary focus:border-secondary transition-colors" placeholder="_" type="text"/>
+</div>
+<div class="relative">
+<label class="text-[10px] text-primary block mb-2 uppercase tracking-widest">Buffer_Message</label>
+<textarea class="w-full bg-transparent border-b border-primary/30 py-2 outline-none text-secondary focus:border-secondary transition-colors" placeholder="_" rows="4"></textarea>
+</div>
+<button class="group flex items-center gap-4 text-secondary hover:text-primary transition-colors py-4" type="submit">
+<span class="tracking-widest uppercase text-xs font-bold">[ SEND_SIGNAL ]</span>
+<span class="material-symbols-outlined group-hover:translate-x-2 transition-transform">send</span>
+</button>
+</form>
+</div>
+</div>
+</section>
+</main>
+<footer class="w-full border-t-[0.5px] border-[#edf8ff]/10 py-12 bg-black/80 backdrop-blur-md z-[60] relative">
+<div class="max-w-7xl mx-auto px-12 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="text-[#2ff801] font-mono text-xs tracking-tighter">
+            SYS_READY // (C) 2024 SILICON_EVO // ALL_LOGIC_RESERVED
+        </div>
+<nav class="flex gap-8">
+<a class="text-[#edf8ff]/40 font-mono text-xs hover:text-[#2ff801] transition-opacity" href="#">DEBUG_LOGS</a>
+<a class="text-[#edf8ff]/40 font-mono text-xs hover:text-[#2ff801] transition-opacity" href="#">SHUTDOWN</a>
+<a class="text-[#6dddff] underline underline-offset-4 font-mono text-xs" href="#">TERMINAL</a>
+</nav>
+</div>
+</footer>
+<script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    /**
+     * Scene Setup
+     */
+    const canvas = document.querySelector('#webgl-canvas');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 8;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    scene.add(ambientLight);
+
+    const pLight1 = new THREE.PointLight(0x6dddff, 2, 20);
+    pLight1.position.set(5, 5, 5);
+    scene.add(pLight1);
+
+    const pLight2 = new THREE.PointLight(0x2ff801, 1.5, 20);
+    pLight2.position.set(-5, -5, 5);
+    scene.add(pLight2);
+
+    /**
+     * Materials and Geometry (Silicon Wafer Simulation)
+     */
+    const waferGroup = new THREE.Group();
+    const waferLayers = [];
+    const layerCount = 6;
+
+    // Materials
+    const darkSiliconMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0c0e12,
+        roughness: 0.1,
+        metalness: 0.9,
+        clearcoat: 1,
+        transparent: true,
+        opacity: 0.9
+    });
+
+    const wireMaterial = new THREE.LineBasicMaterial({ 
+        color: 0x6dddff, 
+        transparent: true, 
+        opacity: 0.4 
+    });
+
+    const innerCircuitMat = new THREE.MeshBasicMaterial({
+        color: 0x2ff801,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.15
+    });
+
+    // Generate Layers
+    for (let i = 0; i < layerCount; i++) {
+        const layer = new THREE.Group();
+        
+        // Disk Mesh
+        const geometry = new THREE.CylinderGeometry(3.5, 3.5, 0.1, 64);
+        const mesh = new THREE.Mesh(geometry, darkSiliconMat);
+        layer.add(mesh);
+
+        // Edges/Wireframe
+        const edges = new THREE.EdgesGeometry(geometry);
+        const line = new THREE.LineSegments(edges, wireMaterial);
+        layer.add(line);
+
+        // Sub-Circuit Detail (Inner)
+        const innerGeom = new THREE.PlaneGeometry(5, 5, 10, 10);
+        const innerMesh = new THREE.Mesh(innerGeom, innerCircuitMat);
+        innerMesh.rotation.x = -Math.PI / 2;
+        innerMesh.position.y = 0.06;
+        layer.add(innerMesh);
+
+        layer.position.y = (i - (layerCount/2)) * 0.15;
+        waferLayers.push(layer);
+        waferGroup.add(layer);
+    }
+
+    waferGroup.rotation.x = Math.PI / 6;
+    scene.add(waferGroup);
+
+    /**
+     * Scroll Animation Logic
+     */
+    function initAnimations() {
+        // Subtle Floating Motion
+        gsap.to(waferGroup.position, {
+            y: 0.2,
+            duration: 3,
+            repeat: -1,
+            yoyo: true,
+            ease: "sine.inOut"
+        });
+
+        gsap.to(waferGroup.rotation, {
+            y: Math.PI * 2,
+            duration: 40,
+            repeat: -1,
+            ease: "none"
+        });
+
+        // Exploded View ScrollTrigger
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "#main-content",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1.5,
+                onUpdate: (self) => {
+                    // Update HUD FOV simulation
+                    const fov = 50 + (self.progress * 15);
+                    camera.fov = fov;
+                    camera.updateProjectionMatrix();
+                }
+            }
+        });
+
+        // Animate each layer apart
+        waferLayers.forEach((layer, i) => {
+            const factor = i - (layerCount / 2);
+            tl.to(layer.position, {
+                y: factor * 4, // Dramatic pull apart
+                z: Math.abs(factor) * 1.5,
+                x: (i % 2 === 0 ? 1 : -1) * 0.5
+            }, 0);
+
+            // Increase opacity of inner circuits as we explode
+            tl.to(layer.children[2].material, {
+                opacity: 0.6
+            }, 0);
+        });
+
+        // Rotate group during scroll
+        tl.to(waferGroup.rotation, {
+            x: Math.PI / 2.5,
+            z: Math.PI / 8
+        }, 0);
+    }
+
+    initAnimations();
+
+    /**
+     * Mouse Parallax and Interaction
+     */
+    window.addEventListener('mousemove', (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5);
+        const y = (e.clientY / window.innerHeight - 0.5);
+        
+        gsap.to(camera.position, {
+            x: x * 3,
+            y: -y * 3,
+            duration: 1.5,
+            ease: "power2.out"
+        });
+        camera.lookAt(0, 0, 0);
+
+        // Update HUD
+        document.getElementById('hud-coord').innerText = `CURSOR_X: ${String(e.clientX).padStart(4, '0')} Y: ${String(e.clientY).padStart(4, '0')}`;
+    });
+
+    window.addEventListener('scroll', () => {
+        const scrolled = window.scrollY;
+        document.getElementById('hud-scroll').innerText = `SCROLL_Y: ${String(Math.floor(scrolled)).padStart(4, '0')}px`;
+        
+        // Randomize "Temp" slightly for flavor
+        const temp = (24 + Math.random() * 0.5).toFixed(1);
+        document.getElementById('hud-temp').innerText = `TEMP: ${temp}°C`;
+    });
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /**
+     * Render Loop
+     */
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+    animate();
+</script>
+</body></html>

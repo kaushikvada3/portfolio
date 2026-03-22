@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kaushik Vada | VLSI Portfolio</title>
+  <meta name="description" content="Kaushik Vada — Electrical Engineering, VLSI & Hardware Design Portfolio">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Space+Grotesk:wght@300..700&family=Space+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="webgl-canvas"></canvas>
+
+  <!-- Fixed Top Bar -->
+  <header class="top-bar">
+    <div class="top-bar-identity">
+      <span class="logo-dot"></span>
+      <div class="top-bar-logo">
+        <span class="top-bar-name">Kaushik Vada</span>
+        <span class="top-bar-role">VLSI & Hardware Design Portfolio</span>
+      </div>
+    </div>
+    <nav class="top-bar-nav">
+      <a href="#section-hero" class="nav-link active">ABOUT</a>
+      <a href="#section-architecture" class="nav-link">EXPERIENCE</a>
+      <a href="#section-projects" class="nav-link">PROJECTS</a>
+      <a href="#section-contact" class="nav-link">CONTACT</a>
+    </nav>
+  </header>
+
+  <!-- Scroll Container -->
+  <div id="scroll-container">
+
+    <!-- Stage 1: Hero -->
+    <section class="scroll-section" id="section-hero">
+      <div class="content-panel glass-panel">
+        <div class="hero-kicker">
+          <span class="label-mono">VLSI / RTL PORTFOLIO</span>
+          <span class="hero-kicker-line" aria-hidden="true"></span>
+        </div>
+        <h1 class="hero-heading" aria-label="Kaushik Vada">
+          <span class="hero-line hero-line-primary">Kaushik</span>
+          <span class="hero-line hero-line-secondary"><span class="hero-accent">Vada</span></span>
+        </h1>
+        <p class="hero-sub">B.S. Electrical Engineering, University of California, Riverside</p>
+        <p class="hero-meta">Expected December 2026 // GPA 3.93 // Regents Distinguished Scholar</p>
+        <p class="hero-summary">VLSI-focused electrical engineering student with hands-on experience in Verilog RTL design, FPGA development in Xilinx Vivado, and introductory ASIC flow work spanning RTL synthesis and timing analysis in Synopsys Design Compiler and Synopsys VCS.</p>
+        <div class="hero-tags">
+          <span class="tag">Verilog</span>
+          <span class="tag">C/C++</span>
+          <span class="tag">Python</span>
+          <span class="tag">Synopsys DC</span>
+          <span class="tag">Synopsys VCS</span>
+          <span class="tag">Fusion Compiler</span>
+          <span class="tag">Vivado</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stage 2: Career Pipeline -->
+    <section class="scroll-section" id="section-architecture">
+      <div class="content-panel glass-panel panel-right">
+        <span class="label-mono">EXPERIENCE</span>
+        <h2 class="section-heading">Experience</h2>
+        <div class="timeline-entry">
+          <div class="timeline-dot active"></div>
+          <div class="timeline-body">
+            <span class="timeline-date">STARTING JUNE 2026</span>
+            <h3 class="timeline-title">Incoming Implementation Engineer Intern</h3>
+            <div class="timeline-company-row">
+              <span class="company-logo-badge company-logo-badge-arm">
+                <img class="company-logo company-logo-arm" src="./arm_logo.png" alt="Arm logo" loading="lazy" decoding="async">
+              </span>
+              <span class="timeline-company">ARM // San Diego, CA</span>
+            </div>
+            <p class="timeline-detail">Planned focus on physical design and implementation for CPU/GPU cores and SoCs, including synthesis, floorplanning, place and route, static timing analysis, verification, and PPAT trade-off analysis.</p>
+          </div>
+        </div>
+        <div class="timeline-entry">
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <span class="timeline-date">JUN 2025 - AUG 2025</span>
+            <h3 class="timeline-title">Hardware Design Intern</h3>
+            <div class="timeline-company-row">
+              <span class="company-logo-badge company-logo-badge-dft">
+                <img class="company-logo company-logo-dft" src="./DFT_logo.png" alt="Digital Force Technologies logo" loading="lazy" decoding="async">
+              </span>
+              <span class="timeline-company">Digital Force Technologies (DFT) // San Diego, CA</span>
+            </div>
+            <p class="timeline-detail">Implemented instruction fetch, instruction decode, and ALU RTL for a custom RISC-V FPGA processor, then verified behavior through simulation, waveform inspection, and iterative debugging.</p>
+          </div>
+        </div>
+        <div class="timeline-entry">
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <span class="timeline-date">SEP 2025 - PRESENT</span>
+            <h3 class="timeline-title">Undergraduate Researcher</h3>
+            <span class="timeline-company">VSCLab, UC Riverside // Riverside, CA</span>
+            <p class="timeline-detail">Developing an open-source RISC-V CPU core and verification infrastructure while building proficiency in constraint-driven synthesis flows and SDC timing constraints in Synopsys Design Compiler.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stage 3: Projects -->
+    <section class="scroll-section" id="section-projects">
+      <div class="content-panel glass-panel">
+        <span class="label-mono">SELECTED PROJECTS</span>
+        <h2 class="section-heading">Projects</h2>
+        <div class="project-card">
+          <span class="project-label">GRAPHICS ACCELERATOR</span>
+          <h3 class="project-title">Project Obsidian: 2D Graphics Accelerator</h3>
+          <p class="project-desc">Designing a specialized 2D graphics accelerator for a fantasy-console architecture, with work spanning microarchitecture, verification, and physical design. Current implementation includes an APB slave interface, on-chip SRAM, a dedicated 2D blitter engine, and a VGA-compatible video scanner.</p>
+          <div class="project-tags">
+            <span class="tag">Verilog</span>
+            <span class="tag">Synopsys DC</span>
+            <span class="tag">APB</span>
+            <span class="tag">VGA</span>
+          </div>
+        </div>
+        <div class="project-card">
+          <span class="project-label">MEMORY SUBSYSTEM</span>
+          <h3 class="project-title">Two-Level Cache RTL (L1-L2)</h3>
+          <p class="project-desc">Implemented configurable Verilog RTL for L1 and L2 caches with LRU replacement plus write-back and write-allocate policies. Validated behavior in Synopsys VCS and Verdi using crafted access traces, hit/miss instrumentation, and waveform inspection across multiple cache parameters.</p>
+          <div class="project-tags">
+            <span class="tag">Verilog</span>
+            <span class="tag">Synopsys VCS</span>
+            <span class="tag">Verdi</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stage 4: Contact -->
+    <section class="scroll-section" id="section-contact">
+      <div class="content-panel glass-panel panel-center">
+        <span class="label-mono">CONTACT</span>
+        <h2 class="section-heading">Contact</h2>
+        <p class="contact-intro">Open to conversations around RTL design, computer architecture, VLSI implementation, and hardware engineering opportunities.</p>
+        <div class="contact-grid">
+          <div class="contact-item">
+            <span class="contact-label">EMAIL</span>
+            <a class="contact-link" href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">PHONE</span>
+            <a class="contact-link" href="tel:+18583058647">858-305-8647</a>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">LINKEDIN</span>
+            <a class="contact-link" href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noreferrer">linkedin.com/in/kaushikv198</a>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">LOCATION</span>
+            <span class="contact-value">Riverside, CA</span>
+          </div>
+        </div>
+        <div class="contact-footer">
+          <span class="footer-copy">(C) 2026 KAUSHIK VADA // VLSI & HARDWARE DESIGN PORTFOLIO</span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
