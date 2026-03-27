@@ -130,24 +130,40 @@ export function setupPortfolioMotion() {
       duration: 0.85,
       stagger: 0.03,
     }, '-=0.56')
-    .from(['.hero-sub', '.hero-meta'], {
+    .from('.hero-sub', {
       y: 24,
       opacity: 0,
       duration: 0.55,
-      stagger: 0.08,
     }, '-=0.42')
-    .from('.hero-summary', {
-      clipPath: 'inset(0 0 100% 0)',
-      y: 20,
-      opacity: 0,
-      duration: 0.8,
-    }, '-=0.32')
-    .from('.hero-tags .tag', {
+    .from('.hero-highlights .hero-highlight', {
       y: 18,
       opacity: 0,
+      duration: 0.55,
+      stagger: 0.08,
+    }, '-=0.32')
+    .from('.hero-facts .hero-fact-card', {
+      y: 18,
+      opacity: 0,
+      duration: 0.62,
+      stagger: 0.08,
+    }, '-=0.42')
+    .from('.hero-scroll-indicator', {
+      y: 12,
+      opacity: 0,
       duration: 0.45,
-      stagger: 0.05,
-    }, '-=0.42');
+    }, '-=0.2');
+
+  gsap.to('.hero-scroll-indicator', {
+    autoAlpha: 0,
+    y: 14,
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '#section-hero',
+      start: 'top top',
+      end: 'top+=240 top',
+      scrub: true,
+    },
+  });
 
   gsap.utils.toArray('.scroll-section .section-heading').forEach((heading) => {
     if (heading.closest('#section-hero')) {
