@@ -241,17 +241,18 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
 
     /* ── STAGE 4: Collapse + Device Encapsulation (75 → 100) ──── */
     const contactDeviceX = 1.65;
+    const originalOffsets = [-0.3, -0.08, 0.1, 0.22, 0.45];
 
-    // Collapse all layers back to assembled position before entering Contact viewport
-    layers.forEach((layer) => {
+    // Collapse all layers back to their original procedural positions
+    layers.forEach((layer, i) => {
       masterTl.to(layer.position, {
-        y: 0,
+        y: originalOffsets[i] || 0,
         duration: 12,
         ease: 'power4.inOut',
       }, 73);
     });
 
-    // Hover the chip directly above the phone's resting position so it drops STRAIGHT DOWN
+    // Hover the chip directly above the phone's resting position
     masterTl.to(assembly.group.position, {
       x: contactDeviceX, y: 3.5, z: 0,
       duration: 12,
@@ -308,7 +309,7 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
         deviceFrame.show();
         
         // Position the glow in world space at the chip's landing coordinates
-        deviceFrame.glowMesh.position.set(contactDeviceX, 0.10, 0);
+        deviceFrame.glowMesh.position.set(contactDeviceX, 0.15, 0);
         deviceFrame.glowMesh.rotation.x = -Math.PI / 2;
         deviceFrame.glowMesh.visible = true;
       }, [], 81);
@@ -320,8 +321,8 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
         81
       );
       masterTl.fromTo(deviceFrame.group.position,
-        { x: contactDeviceX, y: 0.15, z: 0 },
-        { x: contactDeviceX, y: 0.15, z: 0, duration: 0.01 },
+        { x: contactDeviceX, y: 0, z: 0 },
+        { x: contactDeviceX, y: 0, z: 0, duration: 0.01 },
         81
       );
       masterTl.fromTo(deviceFrame.group.scale,
@@ -349,7 +350,7 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
       /* Phase 2 (88-89.2): Chip snaps straight DOWN onto the phone */
       // Landing position matches the phone position exactly so the chip sits right on the surface
       masterTl.to(assembly.group.position, {
-        x: contactDeviceX, y: 0.15, z: 0,
+        x: contactDeviceX, y: 0.22, z: 0,
         duration: 1.2,
         ease: 'power4.in',
       }, 88);
@@ -376,9 +377,9 @@ export function createScrollTimeline({ camera, cameraTarget, assembly, dataTrace
           roughness: solid.roughness,
           duration: 6,
           ease: 'power2.inOut',
-          onComplete: () => {
+          onUpdate: () => {
             // Once fully opaque, move to the opaque render pass to fix z-fighting
-            if (mat.opacity >= 0.99) mat.transparent = false;
+            mat.transparent = mat.opacity < 0.99;
           },
         }, 90);
       });
