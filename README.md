@@ -1,22 +1,31 @@
-# Kaushik Vada · Resume Portfolio
+# Kaushik Vada · Portfolio
 
-Fully client-side resume site highlighting Kaushik’s education, experience, projects, and skills. Everything is data-driven so editing one file updates the whole page.
+Personal portfolio site — an Obsidian-style knowledge-graph fly-through that doubles as
+a resume. Education, experience, projects, and skills are nodes you navigate.
 
 ## Stack & Highlights
 
-- Pure HTML/CSS/JS (ES modules) for zero-build hosting.
-- Anime.js + SplitType for the hero intro, Lenis for smooth scrolling, and Feather icons for consistent glyphs.
-- Resume data lives in `src/data/profile.js`, driving metrics, experience cards, project summaries, and the skill orbit visualization.
-- Responsive layout with keyboard-friendly navigation and semantic sectioning.
+- Pure HTML/CSS/JS (ES modules) — zero build step, hosted as static files.
+- Obsidian graph fly-through (`graph-fly.js` + `graph.json`) as the landing experience.
+- Live project demos, a command palette, and a handful of easter eggs.
+- Anime.js for motion, Lenis for smooth scrolling, Feather icons for glyphs.
+- Responsive layout with keyboard-friendly navigation.
 
 ## Getting Started
 
-1. Open `index.html` in a browser or run `python -m http.server 4173` and visit `http://localhost:4173/`.
-2. Update resume content via `src/data/profile.js`.
-3. Adjust styling in `src/styles/main.css` and behavior in `src/js/app.js` as needed.
+Open `index.html` directly, or serve it:
 
-## Ideas to Extend
+```
+python3 -m http.server 8000
+```
 
-- Add printable styling or PDF export.
-- Hook the data file to a CMS/JSON feed for auto-updates.
-- Introduce light/dark theme toggles or localized content.
+then visit `http://localhost:8000`.
+
+## Project Layout
+
+- `index.html` + `graph-fly.js`, `graph.json`, `eggs.js`, `project-demos.js`,
+  `flow-bay.js`, `ux.js` — the live site (Portfolio Cinema v2).
+- `Archives/` — earlier portfolio versions, kept for reference. See `VERSIONS.md`.
+- `.github/workflows/deploy.yml` — deploys the site to GitHub Pages on push to `main`.
+
+See `VERSIONS.md` for the full history of versions and what is canonical.

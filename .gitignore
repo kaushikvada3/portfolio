@@ -1,2 +1,17 @@
+# OS
+.DS_Store
+
+# Dependencies / build output
+node_modules/
+dist/
+
+# Stale Claude worktrees
+.claude/worktrees/
+
+# Large 3D source assets — kept locally, not tracked
+*.fbx
+*.glb
+
+# Documents
 Kaushik Vada Resume.pdf
 Two-Level Cache.pdf

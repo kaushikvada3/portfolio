@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fusion Compiler — Kaushik Vada Portfolio</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+<div id="app">
+
+  <div id="title-bar">
+    <span class="tb-title">Fusion Compiler · portfolio.design</span>
+    <div class="tb-winbtns">
+      <button type="button" class="tb-wbtn" aria-hidden="true">_</button>
+      <button type="button" class="tb-wbtn" aria-hidden="true">□</button>
+      <button type="button" class="tb-wbtn" aria-hidden="true">✕</button>
+    </div>
+  </div>
+
+  <div id="menu-bar"></div>
+
+  <div id="toolbar-main"></div>
+
+  <div id="workspace">
+
+    <div id="left-toolbar"></div>
+
+    <div id="canvas-wrap">
+      <div id="canvas-container">
+        <canvas id="floorplan-canvas" aria-label="Portfolio floorplan"></canvas>
+      </div>
+      <div id="mobile-fallback" class="mobile-fallback" aria-label="Portfolio overview"></div>
+      <div id="console-dock" class="console-dock" aria-label="Tcl console"></div>
+    </div>
+
+    <div id="right-wrapper">
+      <div id="right-panel"></div>
+    </div>
+
+  </div>
+
+  <div id="status-bar"></div>
+
+  <div id="overlay-root"></div>
+
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

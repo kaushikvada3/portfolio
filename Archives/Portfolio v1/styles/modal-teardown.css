@@ -1,0 +1,655 @@
+/* Modal and teardown styles are loaded lazily to keep initial CSS lightweight. */
+
+body[data-perf-mode="lite"] .project-modal-overlay {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ─── PROJECT DETAIL MODAL ─── */
+.project-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.project-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.project-modal {
+  width: 92vw;
+  max-width: 1100px;
+  height: 90vh;
+  border-radius: 1.5rem;
+  overflow: hidden;
+  position: relative;
+  transform: scale(0.94) translateY(24px);
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.project-modal-overlay.active .project-modal {
+  transform: scale(1) translateY(0);
+}
+
+.project-modal,
+.project-modal > div {
+  border-radius: 1.5rem;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 1.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease, border-color 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modal-scroll-container {
+  overflow-y: auto;
+  height: 100%;
+  padding: 2.5rem 3rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.modal-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+/* ─── 3D SCROLLYTELLING TEARDOWN ─── */
+.modal-viewer-section {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 90vh;
+  margin-bottom: 0;
+  background: transparent;
+}
+
+.chip-viewer-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  overflow: hidden;
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.chip-viewer-container canvas {
+  display: block;
+}
+
+.teardown-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.teardown-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  opacity: 0;
+  max-width: 420px;
+  padding: 1rem;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.teardown-tag {
+  display: block;
+  font-family: "SF Mono", monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+.teardown-name {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0 0 0.6rem 0;
+}
+
+.teardown-desc {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.teardown-scroll-spacer {
+  height: 380vh;
+  pointer-events: none;
+}
+
+.chip-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-family: "SF Mono", monospace;
+  font-size: 0.85rem;
+  z-index: 5;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.chip-loading.is-hidden {
+  opacity: 0;
+}
+
+.teardown-intro {
+  position: absolute;
+  top: 1.15rem;
+  left: 1.15rem;
+  z-index: 4;
+  max-width: min(85%, 560px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.teardown-intro.is-hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+.teardown-intro-tag {
+  display: inline-block;
+  font-family: "SF Mono", monospace;
+  font-size: 0.63rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 0.45rem;
+}
+
+.teardown-intro-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(1.1rem, 2.4vw, 1.8rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.teardown-intro-hint {
+  margin: 0.65rem 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-family: "SF Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.teardown-scroll-indicator {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.6rem, 4.5vh, 2.6rem);
+  transform: translateX(-50%);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(8, 10, 18, 0.5);
+  color: #ffffff;
+  border-radius: 999px;
+  padding: 0.62rem 0.98rem;
+  font-family: "SF Mono", monospace;
+  font-size: 0.62rem;
+  cursor: pointer;
+  transition: opacity 0.35s ease, transform 0.35s ease, background 0.25s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  animation: teardownScrollHint 1.8s ease-in-out infinite;
+}
+
+.teardown-scroll-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.05;
+}
+
+.teardown-scroll-copy strong {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.teardown-scroll-copy em {
+  font-style: normal;
+  font-size: 0.54rem;
+  color: rgba(255, 255, 255, 0.72);
+  letter-spacing: 0.04em;
+  margin-top: 0.2rem;
+}
+
+.teardown-scroll-indicator svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.teardown-scroll-indicator:hover {
+  background: rgba(20, 22, 34, 0.62);
+}
+
+.teardown-scroll-indicator.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  animation: none;
+}
+
+@keyframes teardownScrollHint {
+  0%,
+  100% {
+    transform: translate(-50%, 0);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  50% {
+    transform: translate(-50%, 8px);
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.42);
+  }
+}
+
+/* ─── MODAL CONTENT SECTIONS ─── */
+.modal-header,
+.spec-grid,
+.detail-section,
+.section-divider {
+  position: relative;
+  z-index: 10;
+}
+
+.modal-header {
+  margin-bottom: 2.5rem;
+}
+
+.modal-header .project-tech {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: "SF Mono", monospace;
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.modal-header h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.modal-header .modal-subtitle {
+  color: #cbd5e1;
+  font-size: 1rem;
+  line-height: 1.65;
+  max-width: 720px;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 2.5rem;
+}
+
+.spec-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.75rem;
+  padding: 1.1rem 0.75rem;
+  text-align: center;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.spec-card:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.spec-label {
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+  font-family: "SF Mono", monospace;
+}
+
+.spec-value {
+  color: #ffffff;
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+  letter-spacing: -0.01em;
+}
+
+.spec-detail {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-family: "SF Mono", monospace;
+}
+
+.detail-section {
+  margin-bottom: 2.5rem;
+}
+
+.detail-section h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  letter-spacing: -0.01em;
+}
+
+.detail-section p {
+  color: #e2e8f0;
+  line-height: 1.7;
+  font-size: 0.92rem;
+}
+
+.detail-section ul {
+  padding-left: 1.2rem;
+  color: #e2e8f0;
+  line-height: 1.7;
+  list-style-type: disc;
+  font-size: 0.92rem;
+}
+
+.detail-section li {
+  margin-bottom: 0.4rem;
+}
+
+.detail-section code {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.82rem;
+  font-family: "SF Mono", monospace;
+}
+
+.decision-item {
+  margin-bottom: 0.85rem;
+  padding: 1rem 1.2rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 0.6rem;
+  border-left: 2px solid var(--accent);
+}
+
+.decision-item strong {
+  color: #ffffff;
+  font-size: 0.88rem;
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.decision-item p {
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.fsm-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0.6rem 0;
+}
+
+.fsm-state {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  color: var(--accent);
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.35rem;
+  font-family: "SF Mono", monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.fsm-branch {
+  background: rgba(246, 177, 59, 0.1);
+  border-color: rgba(246, 177, 59, 0.28);
+  color: #f6b13b;
+}
+
+.fsm-arrow {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: "SF Mono", monospace;
+}
+
+.addr-table-wrapper {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.addr-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.addr-table th {
+  text-align: left;
+  padding: 0.6rem 0.8rem;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-family: "SF Mono", monospace;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.addr-table td {
+  padding: 0.55rem 0.8rem;
+  color: #e2e8f0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-family: "SF Mono", monospace;
+  font-size: 0.82rem;
+}
+
+.addr-table td:last-child {
+  font-family: var(--font-body);
+}
+
+.addr-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.perf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.85rem;
+}
+
+.perf-item {
+  padding: 1.1rem;
+  background: rgba(255, 255, 255, 0.025);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.perf-label {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-family: "SF Mono", monospace;
+}
+
+.perf-value {
+  color: var(--accent);
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0.2rem 0;
+}
+
+.perf-desc {
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .project-modal-overlay {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .project-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  .project-modal,
+  .project-modal > div {
+    border-radius: 0;
+  }
+
+  .modal-scroll-container {
+    padding: 1.5rem;
+  }
+
+  .chip-viewer-container {
+    height: 280px;
+  }
+
+  .teardown-intro {
+    top: 0.9rem;
+    left: 0.9rem;
+    max-width: calc(100% - 4.2rem);
+  }
+
+  .teardown-intro-title {
+    font-size: clamp(1rem, 6vw, 1.25rem);
+  }
+
+  .teardown-intro-hint {
+    font-size: 0.56rem;
+  }
+
+  .teardown-scroll-indicator {
+    bottom: 0.9rem;
+    padding: 0.48rem 0.72rem;
+    font-size: 0.58rem;
+    gap: 0.45rem;
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+
+  .teardown-scroll-copy strong {
+    font-size: 0.54rem;
+    letter-spacing: 0.09em;
+  }
+
+  .teardown-scroll-copy em {
+    font-size: 0.48rem;
+  }
+
+  .spec-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .perf-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-close-btn {
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  .fsm-flow {
+    gap: 0.3rem;
+  }
+
+  .fsm-state {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .teardown-scroll-spacer {
+    height: 320vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teardown-scroll-indicator {
+    animation: none;
+  }
+}
