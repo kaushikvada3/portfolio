@@ -6,7 +6,7 @@
 <title>Kaushik Vada — RTL &amp; VLSI Engineer</title>
 <meta name="description" content="Kaushik Vada — RTL & VLSI engineer. RTL design, verification, and the full RTL-to-GDSII flow. Incoming implementation engineer intern at ARM, undergraduate researcher at UCR." />
 <meta name="author" content="Kaushik Vada" />
-<meta name="theme-color" content="#08080B" />
+<meta name="theme-color" content="#000000" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Kaushik Vada — RTL & VLSI Engineer" />
 <meta property="og:description" content="RTL design, verification, and the full RTL-to-GDSII flow — from microarchitecture through tapeout." />
@@ -19,11 +19,12 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2308080B'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23FFC75A' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23FFC75A'/%3E%3C/svg%3E" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #08080B;
-    --bg-elev: #0E0E13;
+    /* True-black canvas — bezels disappear on OLED, edge-to-edge feel */
+    --bg: #000000;
+    --bg-elev: #0C0C10;
     --ink: #F5F2EB;
     --ink-soft: rgba(245, 242, 235, 0.62);
     --ink-quiet: rgba(245, 242, 235, 0.46);
@@ -37,6 +38,40 @@
     --mono: "JetBrains Mono", ui-monospace, monospace;
     /* Stronger ease-out than the CSS built-in — used for interactive feedback */
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Concentric radius scale — child radius nests inside parent.
+       Used directly as the squircle fallback and for non-squircle elements. */
+    --r-pill: 999px;
+    --r-xl: 28px;
+    --r-lg: 22px;
+    --r-md: 16px;
+    --r-sm: 10px;
+    --r-xs: 6px;
+    --r-hair: 3px;
+
+    /* Semantic state colors — high-saturation, used only for meaning */
+    --state-live: #2BFF88;   /* neon green — live / success           */
+    --state-rec:  #FF3B30;   /* deep red — destructive / recording    */
+    --state-link: #0A84FF;   /* iOS blue — connectivity / links       */
+
+    /* Luminescence — ring + bloom for active states */
+    --glow-live: 0 0 0 1px rgba(43,255,136,0.45), 0 0 18px rgba(43,255,136,0.35);
+    --glow-warn: 0 0 0 1px rgba(255,199,90,0.40), 0 0 22px rgba(255,199,90,0.28);
+
+    /* Spring / elastic easing — motion with visual mass */
+    --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-elastic: cubic-bezier(0.5, 1.8, 0.4, 0.9);
+    --ease-snap:    cubic-bezier(0.2, 0.9, 0.1, 1);
+
+    /* Typographic weight scale — hierarchy by weight, not size */
+    --w-data: 600;
+    --w-strong: 500;
+    --w-body: 400;
+    --w-label: 300;
+    --w-quiet: 200;
+
+    /* Superellipse exponent — read by squircle.js (≈4 = Apple corner feel) */
+    --squircle-n: 4;
   }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
@@ -56,9 +91,25 @@
   :focus-visible {
     outline: 1px solid var(--halo-3);
     outline-offset: 3px;
-    border-radius: 2px;
+    border-radius: var(--r-hair);
   }
   :focus:not(:focus-visible) { outline: none; }
+
+  /* SF-Symbols-style icons — sized to the text they sit beside,
+     color inherited via currentColor. */
+  .icon {
+    width: 1em; height: 1em;
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex: none;
+  }
+  .sec-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .sec-eyebrow .icon { font-size: 1.15em; }
+  .proj-open { display: inline-flex; align-items: center; gap: 5px; }
 
   /* ─── Quiet staggered hero entrance ─── */
   @keyframes hero-rise {
@@ -87,14 +138,14 @@
   /* Obsidian-vault graph — ambient background. Soft fade-in on first paint. */
   @keyframes graph-fade-in {
     from { opacity: 0; }
-    to   { opacity: 0.78; }
+    to   { opacity: 0.62; }
   }
   #graph-bg {
     position: fixed; inset: 0;
     width: 100vw; height: 100vh;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.78;
+    opacity: 0.62;
     animation: graph-fade-in 1.6s ease-out 0.05s both;
     transition: filter 0.4s ease;
   }
@@ -138,15 +189,23 @@
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--ink-soft);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    background: rgba(8,8,11,0.5);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    background: rgba(0,0,0,0.5);
     border-bottom: 1px solid var(--rule);
   }
   .nav .mark { color: var(--ink); display: flex; align-items: center; gap: 8px; }
   .nav .mark::before {
-    content: ""; width: 6px; height: 6px; background: #44FF99; border-radius: 50%;
-    box-shadow: 0 0 8px #44FF99;
+    content: ""; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--state-live);
+    box-shadow: var(--glow-live);
+    animation: glow-pulse 2.4s var(--ease-out) infinite;
+  }
+  /* Luminescence — active "live" indicators breathe */
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: var(--glow-live); }
+    50%      { box-shadow: 0 0 0 1px rgba(43,255,136,0.7),
+                           0 0 26px rgba(43,255,136,0.55); }
   }
   .nav-links { display: flex; gap: 28px; }
   .nav-links a { color: var(--ink-soft); text-decoration: none; transition: color 0.2s; }
@@ -207,11 +266,12 @@
     align-items: end;
   }
   .hero-tag {
-    font-family: var(--serif);
+    font-family: var(--sans);
+    font-weight: var(--w-label);
     font-size: 22px;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--ink);
-    max-width: 38ch;
+    max-width: 40ch;
     text-wrap: pretty;
   }
   .hero-tag em { font-style: italic; color: var(--halo-3); }
@@ -223,26 +283,29 @@
     color: var(--ink-soft);
     text-align: center;
   }
-  .hero-loc strong { color: var(--ink); display: block; font-weight: 500; font-size: 13px; margin-bottom: 4px; letter-spacing: 0.1em; }
+  .hero-loc strong { color: var(--ink); display: block; font-weight: var(--w-data); font-size: 13px; margin-bottom: 4px; letter-spacing: 0.1em; }
   .hero-cta {
     display: flex; gap: 14px; justify-self: end;
     font-family: var(--mono); font-size: 11px;
     letter-spacing: 0.14em; text-transform: uppercase;
   }
   .hero-cta a {
+    display: inline-flex; align-items: center; gap: 8px;
     color: var(--ink); text-decoration: none;
     padding: 14px 22px;
     border: 1px solid var(--rule);
-    border-radius: 999px;
+    border-radius: var(--r-pill);
     background: rgba(255,255,255,0.02);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: background-color 0.25s var(--ease-out),
                 color 0.25s var(--ease-out),
                 border-color 0.25s var(--ease-out),
-                transform 0.16s var(--ease-out);
+                transform 0.24s var(--ease-spring);
   }
   .hero-cta a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .hero-cta a:active { transform: scale(0.97); }
+  /* Elastic press — fast snap down, spring overshoot on release */
+  .hero-cta a:active { transform: scale(0.94); transition: transform 0.1s var(--ease-snap); }
   .hero-cta a.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
   .hero-cta a.primary:hover { background: transparent; color: var(--ink); }
 
@@ -306,18 +369,53 @@
   .glass {
     background:
       linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)),
-      rgba(13,13,18,0.62);
+      rgba(12,12,16,0.72);
     border: 1px solid var(--glass-edge);
-    border-radius: 16px;
+    border-radius: var(--r-lg);
     position: relative;
+    /* Outer elevation shadow — survives the squircle clip-path,
+       lifts Tier-2 cards off the muted Tier-1 background. */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.45);
   }
   .glass::before {
     content: "";
     position: absolute; inset: 0;
-    border-radius: 16px;
+    border-radius: inherit;
     background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 30%);
     pointer-events: none;
   }
+
+  /* ─── Squircle geometry ──────────────────────────────────────
+     [data-squircle] elements receive a G2-continuous superellipse
+     outline from squircle.js. The border-radius below is the
+     no-JS / unsupported-browser fallback.
+
+     Once the clip-paths are applied, squircle.js sets `.sq` on
+     <html>. Only then is the real border dropped for a hairline
+     drawn by a ::after pseudo clipped to an even-odd squircle
+     ring — a plain inset box-shadow can't be used, clip-path
+     also clips box-shadow and an inset shadow traces the circular
+     border-radius, not the squircle. Depth on this OLED-black
+     canvas comes from the lighter fill + this ring + the sheen. */
+  [data-squircle] { border-radius: var(--r-lg); }
+  .proj[data-squircle],
+  .chip-bay[data-squircle] { border-radius: var(--r-xl); }
+  .chip-stage-wrap[data-squircle] { border-radius: var(--r-md); }
+  .sq [data-squircle] {
+    border: 0;
+    box-shadow: none;
+  }
+  .sq [data-squircle]::after {
+    content: "";
+    position: absolute; inset: 0;
+    clip-path: var(--sq-ring);
+    background: rgba(255,255,255,0.11);
+    transition: background 0.3s var(--ease-out);
+    pointer-events: none;
+    z-index: 3;
+  }
+  .sq [data-squircle]:focus-visible { outline: none; }
+  .sq [data-squircle]:focus-visible::after { background: var(--halo-3); }
 
   /* ABOUT */
   .about {
@@ -347,8 +445,8 @@
     border-bottom: 1px solid var(--rule);
   }
   .about-meta-row:last-child { border-bottom: none; }
-  .about-meta-row .k { color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; }
-  .about-meta-row .v { color: var(--ink); }
+  .about-meta-row .k { color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; font-weight: var(--w-label); }
+  .about-meta-row .v { color: var(--ink); font-weight: var(--w-data); }
 
   /* EXPERIENCE — vertical timeline of glass plates */
   .exp-list { display: flex; flex-direction: column; gap: 14px; }
@@ -358,9 +456,13 @@
     gap: 40px;
     padding: 32px 36px;
     align-items: center;
-    transition: transform 0.3s ease, border-color 0.3s ease;
+    transition: transform 0.42s var(--ease-spring),
+                border-color 0.3s ease,
+                box-shadow 0.3s var(--ease-out);
   }
   .exp-item:hover { border-color: rgba(255,255,255,0.18); }
+  /* Squircled cards have no real border — brighten the ring instead. */
+  .sq [data-squircle].exp-item:hover::after { background: rgba(255,255,255,0.26); }
   .exp-item:hover .exp-arrow { color: var(--halo-3); }
   @media (hover: hover) {
     .exp-item:hover { transform: translateX(8px); }
@@ -393,7 +495,7 @@
     display: flex; flex-direction: column; justify-content: space-between;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.35s ease;
+    transition: transform 0.42s var(--ease-spring);
   }
   @media (hover: hover) {
     .proj:hover { transform: translateY(-6px); }
@@ -450,9 +552,10 @@
   }
   .skill-list { list-style: none; }
   .skill-list li {
-    font-family: var(--serif);
-    font-size: 18px;
-    padding: 8px 0;
+    font-family: var(--sans);
+    font-weight: var(--w-body);
+    font-size: 16px;
+    padding: 9px 0;
     border-bottom: 1px solid var(--rule);
     display: flex; justify-content: space-between; align-items: baseline;
   }
@@ -504,12 +607,12 @@
     color: var(--bg);
     transition: background-color 0.25s var(--ease-out),
                 color 0.25s var(--ease-out),
-                transform 0.16s var(--ease-out);
+                transform 0.24s var(--ease-spring);
     position: relative;
     z-index: 2;
   }
   .contact-cta:hover { background: transparent; color: var(--ink); }
-  .contact-cta:active { transform: scale(0.98); }
+  .contact-cta:active { transform: scale(0.94); transition: transform 0.1s var(--ease-snap); }
   .contact-foot {
     margin-top: 80px;
     display: flex; justify-content: center; gap: 36px;
@@ -650,12 +753,12 @@
     font-size: 11px;
     width: 28px;
     height: 28px;
-    border-radius: 6px;
+    border-radius: var(--r-sm);
     cursor: pointer;
     transition: background-color 0.18s var(--ease-out),
                 border-color 0.18s var(--ease-out),
                 color 0.18s var(--ease-out),
-                transform 0.12s var(--ease-out);
+                transform 0.24s var(--ease-spring);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -666,7 +769,7 @@
     border-color: rgba(255,199,90,0.40);
     color: var(--halo-3);
   }
-  .flow-controls button:active { transform: scale(0.92); }
+  .flow-controls button:active { transform: scale(0.86); transition: transform 0.1s var(--ease-snap); }
   .flow-controls button.active {
     background: rgba(255,199,90,0.14);
     border-color: rgba(255,199,90,0.55);
@@ -705,10 +808,10 @@
     display: block;
   }
   .chip-caption h3 {
-    font-family: var(--serif);
-    font-weight: 200;
-    font-size: 36px;
-    line-height: 1.05;
+    font-family: var(--sans);
+    font-weight: var(--w-strong);
+    font-size: 30px;
+    line-height: 1.12;
     letter-spacing: -0.02em;
     margin-bottom: 16px;
   }
@@ -727,8 +830,8 @@
     font-family: var(--mono);
     font-size: 11px;
   }
-  .chip-spec .k { color: var(--ink-quiet); letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; }
-  .chip-spec .v { color: var(--ink); }
+  .chip-spec .k { color: var(--ink-quiet); letter-spacing: 0.14em; text-transform: uppercase; font-size: 10px; font-weight: var(--w-label); }
+  .chip-spec .v { color: var(--ink); font-weight: var(--w-data); }
   .chip-hint {
     margin-top: 18px;
     font-family: var(--mono);
@@ -752,10 +855,10 @@
     mix-blend-mode: lighten;
   }
   .proj .proj-bottom {
-    background: linear-gradient(180deg, transparent, rgba(8,8,11,0.78) 35%);
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.78) 35%);
     padding: 24px 28px 8px;
     margin: -32px -36px -10px;
-    border-radius: 0 0 16px 16px;
+    /* bottom corners are clipped by the parent .proj squircle */
   }
 
   /* ─── Command palette ──────────────────────────────────── */
@@ -777,15 +880,25 @@
   .cmd-palette.open { opacity: 1; visibility: visible; }
   .cmd-palette .cmd-card {
     width: min(680px, 92vw);
-    background: rgba(14,14,19,0.96);
+    background: rgba(12,12,17,0.97);
     border: 1px solid rgba(255,199,90,0.22);
-    border-radius: 12px;
-    box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    border-radius: var(--r-pill);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03) inset;
     overflow: hidden;
-    transform: translateY(-12px) scale(0.98);
-    transition: transform 0.16s var(--ease-out);
+    opacity: 0;
+    /* Closed = a thin pill; open = a full card. It morphs between
+       the two — grows and un-rounds rather than fading in. */
+    transform-origin: top center;
+    transform: translateY(-40px) scaleY(0.12);
+    transition: transform 0.34s var(--ease-elastic),
+                border-radius 0.34s var(--ease-elastic),
+                opacity 0.2s var(--ease-out);
   }
-  .cmd-palette.open .cmd-card { transform: translateY(0) scale(1); }
+  .cmd-palette.open .cmd-card {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    border-radius: var(--r-lg);
+  }
   .cmd-head {
     display: flex; align-items: center; gap: 12px;
     padding: 16px 18px;
@@ -966,10 +1079,20 @@
     max-height: 88vh;
     overflow-y: auto;
     padding: 44px 46px;
-    transform: scale(0.94);
-    transition: transform 0.24s var(--ease-out);
+    border-radius: var(--r-pill);
+    box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+    opacity: 0;
+    /* Morphs open from a pill, same language as the command palette */
+    transform: scaleY(0.14);
+    transition: transform 0.34s var(--ease-elastic),
+                border-radius 0.34s var(--ease-elastic),
+                opacity 0.2s var(--ease-out);
   }
-  .proj-detail.open .pd-card { transform: scale(1); }
+  .proj-detail.open .pd-card {
+    opacity: 1;
+    transform: scaleY(1);
+    border-radius: var(--r-lg);
+  }
   .pd-close {
     position: absolute;
     top: 18px; right: 20px;
@@ -983,10 +1106,10 @@
     text-transform: uppercase;
     padding: 6px 13px;
     cursor: pointer;
-    transition: color 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.12s var(--ease-out);
+    transition: color 0.18s var(--ease-out), border-color 0.18s var(--ease-out), transform 0.24s var(--ease-spring);
   }
   .pd-close:hover { color: var(--ink); border-color: var(--ink); }
-  .pd-close:active { transform: scale(0.95); }
+  .pd-close:active { transform: scale(0.88); transition: transform 0.1s var(--ease-snap); }
   .pd-eyebrow {
     font-family: var(--mono);
     font-size: 10.5px;
@@ -1028,8 +1151,8 @@
     border-top: 1px solid var(--rule);
     border-bottom: 1px solid var(--rule);
   }
-  .pd-spec .k { color: var(--ink-quiet); text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; }
-  .pd-spec .v { color: var(--ink); }
+  .pd-spec .k { color: var(--ink-quiet); text-transform: uppercase; letter-spacing: 0.12em; font-size: 10px; font-weight: var(--w-label); }
+  .pd-spec .v { color: var(--ink); font-weight: var(--w-data); }
   .pd-links { display: flex; flex-wrap: wrap; gap: 12px; }
   .pd-links a {
     font-family: var(--mono);
@@ -1042,10 +1165,10 @@
     border: 1px solid var(--rule);
     border-radius: 999px;
     transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out),
-                border-color 0.2s var(--ease-out), transform 0.16s var(--ease-out);
+                border-color 0.2s var(--ease-out), transform 0.24s var(--ease-spring);
   }
   .pd-links a:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-  .pd-links a:active { transform: scale(0.97); }
+  .pd-links a:active { transform: scale(0.94); transition: transform 0.1s var(--ease-snap); }
 
   /* ─── Reduced motion ─────────────────────────────────────────
      Stop the entrances, ambient loops, and grain; collapse smooth
@@ -1061,10 +1184,45 @@
     .exp-item:hover .exp-arrow,
     .proj:hover,
     .proj:hover .proj-art { transform: none !important; }
+    /* Overlays fade instead of morphing from a pill */
+    .cmd-palette .cmd-card,
+    .pd-card {
+      transform: none !important;
+      transition: opacity 0.12s linear !important;
+    }
   }
 </style>
 </head>
 <body>
+
+<!-- ── SF-Symbols-style icon set ──────────────────────────────
+     Geometric, monochromatic, uniform 1.6 stroke. Referenced via
+     <use>; .icon sizes them to 1em so they scale with text and
+     inherit color through currentColor. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/>
+    </symbol>
+    <symbol id="i-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7.5 16.5 16.5 7.5M8.5 7.5h8v8"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/><path d="M12 11.3v5.2M12 7.6h.01"/>
+    </symbol>
+    <symbol id="i-work" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="7.5" width="18" height="12" rx="2.5"/>
+      <path d="M8.5 7.5V6A2.5 2.5 0 0 1 11 3.5h2A2.5 2.5 0 0 1 15.5 6v1.5M3 13h18"/>
+    </symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.5 3.5 8 12 12.5 20.5 8 12 3.5ZM3.5 13.5 12 18l8.5-4.5"/>
+    </symbol>
+    <symbol id="i-tools" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 7h14M5 12h14M5 17h14"/>
+      <circle cx="10" cy="7" r="2.4"/><circle cx="15" cy="12" r="2.4"/><circle cx="8" cy="17" r="2.4"/>
+    </symbol>
+  </defs>
+</svg>
 
 <canvas id="graph-bg" aria-hidden="true"></canvas>
 
@@ -1076,7 +1234,7 @@
     <a href="#projects">projects</a>
     <a href="#skills">skills</a>
     <a href="#contact">contact</a>
-    <a href="resume.pdf" target="_blank" rel="noopener">résumé ↗</a>
+    <a href="resume.pdf" target="_blank" rel="noopener">résumé <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>
   </div>
 </nav>
 
@@ -1096,8 +1254,8 @@
         San Diego, CA · open to relocate
       </div>
       <div class="hero-cta">
-        <a href="#projects" class="primary">view work</a>
-        <a href="#contact">say hello</a>
+        <a href="#projects" class="primary">view work <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></a>
+        <a href="#contact">say hello <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></a>
       </div>
     </div>
   </div>
@@ -1108,7 +1266,7 @@
 <section class="section" id="about">
   <header class="sec-head">
     <div>
-      <div class="sec-eyebrow">01 · about</div>
+      <div class="sec-eyebrow"><svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>01 · about</div>
       <h2 class="sec-title">A few <em>true</em> things.</h2>
     </div>
     <div class="sec-count">004 paragraphs</div>
@@ -1118,7 +1276,7 @@
       I work at the boundary of physics and abstraction — RTL design, verification, and the full <em>RTL-to-GDSII</em> flow — with the same instinct: <em>keep the model honest.</em>
       <span class="quiet">Currently architecting a 2D graphics accelerator for academic tapeout, refining timing constraints in Synopsys DC, and authoring a two-level cache hierarchy from first principles.</span>
     </p>
-    <div class="about-meta glass">
+    <div class="about-meta glass" data-squircle>
       <div class="about-meta-row"><span class="k">Next</span><span class="v">ARM — implementation eng. intern</span></div>
       <div class="about-meta-row"><span class="k">Now</span><span class="v">VSCLab — undergrad researcher</span></div>
       <div class="about-meta-row"><span class="k">Studying</span><span class="v">UCR · BS EE · 3.93 GPA</span></div>
@@ -1128,8 +1286,8 @@
   </div>
 
   <!-- Flow bay: one module, three abstractions, one clock -->
-  <div class="chip-bay flow-bay-grid">
-    <div class="chip-stage-wrap">
+  <div class="chip-bay flow-bay-grid" data-squircle>
+    <div class="chip-stage-wrap" data-squircle>
       <div id="flow-bay"></div>
     </div>
     <div class="chip-caption">
@@ -1141,7 +1299,7 @@
         <span class="k">Cells</span><span class="v">8 (4 ADDH · 4 DFFX1)</span>
         <span class="k">Routing</span><span class="v">M1 / M2 + vias</span>
         <span class="k">Period</span><span class="v">840 ms</span>
-        <span class="k">Status</span><span class="v" style="color:var(--halo-3)">▶ ticking live</span>
+        <span class="k">Status</span><span class="v" style="color:var(--state-live);text-shadow:0 0 10px rgba(43,255,136,0.55)">▶ ticking live</span>
       </div>
       <div class="chip-hint">hover any <kbd>signal</kbd> to highlight across views · use <kbd>⏭</kbd> to step</div>
     </div>
@@ -1152,13 +1310,13 @@
 <section class="section" id="exp">
   <header class="sec-head">
     <div>
-      <div class="sec-eyebrow">02 · operating history</div>
+      <div class="sec-eyebrow"><svg class="icon" aria-hidden="true"><use href="#i-work"></use></svg>02 · operating history</div>
       <h2 class="sec-title">Where I've <em>shipped</em>.</h2>
     </div>
     <div class="sec-count">003 records</div>
   </header>
   <div class="exp-list">
-    <div class="exp-item glass">
+    <div class="exp-item glass" data-squircle>
       <span class="exp-yr">2026 — incoming</span>
       <div>
         <h3 class="exp-co">ARM<em>.</em></h3>
@@ -1166,7 +1324,7 @@
       </div>
       <span class="exp-arrow">→</span>
     </div>
-    <div class="exp-item glass">
+    <div class="exp-item glass" data-squircle>
       <span class="exp-yr">2025 — present</span>
       <div>
         <h3 class="exp-co">UCR <em>/</em> VSCLab</h3>
@@ -1174,7 +1332,7 @@
       </div>
       <span class="exp-arrow">→</span>
     </div>
-    <div class="exp-item glass">
+    <div class="exp-item glass" data-squircle>
       <span class="exp-yr">summer 2025</span>
       <div>
         <h3 class="exp-co">Digital Force <em>Technologies</em></h3>
@@ -1189,17 +1347,17 @@
 <section class="section" id="projects">
   <header class="sec-head">
     <div>
-      <div class="sec-eyebrow">03 · selected work</div>
+      <div class="sec-eyebrow"><svg class="icon" aria-hidden="true"><use href="#i-layers"></use></svg>03 · selected work</div>
       <h2 class="sec-title">Things I'm <em>proud</em> of.</h2>
     </div>
     <div class="sec-count">002 in-flight</div>
   </header>
   <div class="proj-grid">
-    <article class="proj glass span-2">
+    <article class="proj glass span-2" data-squircle>
       <div class="proj-art art-3"></div>
       <div class="proj-top">
         <span>2025 — present · rtl → gdsii</span>
-        <span>open ↗</span>
+        <span class="proj-open">open <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></span>
       </div>
       <div class="proj-bottom">
         <h3 class="proj-name">Project <em>Obsidian</em> — a 2D graphics accelerator, all the way to silicon.</h3>
@@ -1207,11 +1365,11 @@
       </div>
     </article>
 
-    <article class="proj glass span-2">
+    <article class="proj glass span-2" data-squircle>
       <div class="proj-art art-1"></div>
       <div class="proj-top">
         <span>2025 — present · verilog · vcs</span>
-        <span>open ↗</span>
+        <span class="proj-open">open <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></span>
       </div>
       <div class="proj-bottom" data-comment-anchor="8b9d28eabe-div">
         <h3 class="proj-name">A two-level <em>cache</em>, parameterized end-to-end.</h3>
@@ -1225,13 +1383,13 @@
 <section class="section" id="skills">
   <header class="sec-head">
     <div>
-      <div class="sec-eyebrow">04 · tooling</div>
+      <div class="sec-eyebrow"><svg class="icon" aria-hidden="true"><use href="#i-tools"></use></svg>04 · tooling</div>
       <h2 class="sec-title">Instruments at <em>hand</em>.</h2>
     </div>
     <div class="sec-count">five categories</div>
   </header>
   <div class="skills">
-    <div class="skill-card glass">
+    <div class="skill-card glass" data-squircle>
       <div class="skill-cat">A · HDL</div>
       <ul class="skill-list">
         <li><span>Verilog</span><span class="lvl">primary</span></li>
@@ -1239,7 +1397,7 @@
         <li><span>SDC constraints</span><span class="lvl">working</span></li>
       </ul>
     </div>
-    <div class="skill-card glass">
+    <div class="skill-card glass" data-squircle>
       <div class="skill-cat">B · EDA / backend</div>
       <ul class="skill-list">
         <li><span>Synopsys Design Compiler</span><span class="lvl">working</span></li>
@@ -1248,14 +1406,14 @@
         <li><span>Static timing analysis</span><span class="lvl">working</span></li>
       </ul>
     </div>
-    <div class="skill-card glass">
+    <div class="skill-card glass" data-squircle>
       <div class="skill-cat">C · FPGA</div>
       <ul class="skill-list">
         <li><span>Xilinx Vivado</span><span class="lvl">working</span></li>
         <li><span>Verdi waveform</span><span class="lvl">working</span></li>
       </ul>
     </div>
-    <div class="skill-card glass">
+    <div class="skill-card glass" data-squircle>
       <div class="skill-cat">D · architecture</div>
       <ul class="skill-list">
         <li><span>RISC-V</span><span class="lvl">primary</span></li>
@@ -1264,7 +1422,7 @@
         <li><span>Computer architecture</span><span class="lvl">primary</span></li>
       </ul>
     </div>
-    <div class="skill-card glass">
+    <div class="skill-card glass" data-squircle>
       <div class="skill-cat">E · protocols &amp; software</div>
       <ul class="skill-list">
         <li><span>APB · UART</span><span class="lvl">working</span></li>
@@ -1281,7 +1439,7 @@
 <section class="contact" id="contact">
   <div class="contact-orb"></div>
   <h2 class="contact-headline">Let's <em>talk</em>.</h2>
-  <a href="mailto:kaushikvada3@gmail.com" class="contact-cta">kaushikvada3@gmail.com →</a>
+  <a href="mailto:kaushikvada3@gmail.com" class="contact-cta">kaushikvada3@gmail.com <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg></a>
   <div class="contact-foot">
     <a href="https://github.com/kaushikvada" target="_blank" rel="noopener">github / kaushikvada</a>
     <a href="https://linkedin.com/in/kaushikv198" target="_blank" rel="noopener">linkedin / kaushikv198</a>
@@ -1302,6 +1460,9 @@
 
 <!-- Scroll reveals + project detail lightbox -->
 <script defer src="ux.js"></script>
+
+<!-- Superellipse (squircle) corners for [data-squircle] elements -->
+<script defer src="squircle.js"></script>
 
 <!-- ── Easter egg: terminal drawer ───────────────────────────── -->
 <div id="terminal-drawer" aria-hidden="true">

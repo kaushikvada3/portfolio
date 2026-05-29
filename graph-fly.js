@@ -164,7 +164,7 @@
   // expand outward, hero fades in over the top.
   const INTRO_HOLD_MS = 900;
   const INTRO_EXPAND_MS = 2400;
-  let introPhase = REDUCED ? 'done' : 'hold';  // 'hold' | 'expand' | 'done'
+  let introPhase = 'done';  // 'hold' | 'expand' | 'done' — intro big-bang disabled; graph boots settled
   let introT0 = performance.now();
   let bangAt = 0;
   // Easter egg state

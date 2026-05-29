@@ -124,7 +124,7 @@
       d.specs.map(([k, v]) => `<span class="k">${k}</span><span class="v">${v}</span>`).join('');
     overlay.querySelector('.pd-links').innerHTML =
       d.links.map(([label, href]) =>
-        `<a href="${href}" target="_blank" rel="noopener">${label} ↗</a>`).join('');
+        `<a href="${href}" target="_blank" rel="noopener">${label} <svg class="icon" aria-hidden="true"><use href="#i-external"></use></svg></a>`).join('');
   }
 
   function openDetail(card) {
