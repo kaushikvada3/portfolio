@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>GPU Die Lab</title>
+<meta name="color-scheme" content="dark" />
+<style>
+  :root {
+    color-scheme: dark;
+    --ink-1: rgba(255, 255, 255, 0.96);
+    --ink-2: rgba(255, 255, 255, 0.80);
+    --ink-body: rgba(255, 255, 255, 0.72);
+    --ink-3: rgba(255, 255, 255, 0.54);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --maxw: 75rem;
+    --gutter: max(1rem, 5vw);
+    --section-y: clamp(6rem, 11vw, 10rem);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; }
+  body { color: var(--ink-1); font: 1rem/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  .wrap { width: min(var(--maxw), 100% - 2 * var(--gutter)); margin-inline: auto; }
+  .meta { font-family: var(--mono); font-size: 0.8125rem; letter-spacing: 0.02em; color: var(--ink-3); }
+  .filler { min-height: 110vh; display: grid; place-items: center; text-align: center; }
+  .filler h2 { font-size: clamp(2.75rem, 6.4vw, 5.5rem); line-height: 1.02; letter-spacing: -0.035em; color: rgba(255,255,255,.18); }
+  .project { padding-block: var(--section-y); text-align: center; }
+  .project .meta { margin-bottom: 1rem; }
+  .h2 { font-size: clamp(3.5rem, 12vw, 10rem); font-weight: 700; line-height: 0.92; letter-spacing: -0.045em; }
+  .section-sub { margin: 1.5rem auto 0; max-width: 30em; font-size: clamp(1.1875rem, 1.7vw, 1.5rem); font-weight: 500; line-height: 1.35; letter-spacing: -0.01em; color: var(--ink-2); }
+  .die { margin: 4rem auto 0; max-width: 56rem; }
+  .points { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-top: 4rem; text-align: left; color: var(--ink-body); font-size: 1.0625rem; }
+  .points strong { color: var(--ink-1); font-weight: 600; }
+  @media (max-width: 63.99rem) { .points { grid-template-columns: minmax(0, 1fr); max-width: 40rem; margin-inline: auto; } }
+  @media (max-width: 47.99rem) { .h2 { font-size: min(18vw, 6rem); } }
+</style>
+</head>
+<body>
+  <section class="filler"><div class="wrap"><h2>Experience</h2><p class="meta">filler — scroll down</p></div></section>
+
+  <section id="project" class="project" aria-labelledby="proj-title">
+    <div class="wrap">
+      <p class="meta">Project · March 2026 – Present</p>
+      <h2 id="proj-title" class="h2">MiniGPU-2</h2>
+      <p class="section-sub">A custom graphics accelerator ASIC, from vertex transformation to rasterization.</p>
+      <figure class="die" id="gpu-die"></figure>
+      <ul class="points">
+        <li><strong>Floorplanning and place-and-route</strong> in Cadence Innovus on a SAED 32nm checkpoint, iterating on timing and congestion for a custom ASIC.</li>
+        <li><strong>RTL-to-gate synthesis, with a team,</strong> in Synopsys Design Compiler and Cadence Genus for a SystemVerilog graphics pipeline spanning vertex transformation and rasterization.</li>
+        <li><strong>Dual-clock asynchronous FIFOs</strong> with Gray-coded pointer synchronizers to support communication across clock domains.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="filler"><div class="wrap"><h2>Skills</h2><p class="meta">filler</p></div></section>
+
+  <script src="../../js/spring.js"></script>
+  <script src="../../js/chip-core.js"></script>
+  <script src="../../js/chip-gpu.js"></script>
+  <script>
+    // Debug: ?t=13.6 pins the simulation at that time (paused, no reveal).
+    const q = new URLSearchParams(location.search);
+    const opts = {};
+    if (q.has('t')) opts.time = parseFloat(q.get('t'));
+    if (q.has('nointro')) opts.intro = false;
+    window.gpu = KVChip.GPU.mount(document.getElementById('gpu-die'), opts);
+  </script>
+</body>
+</html>

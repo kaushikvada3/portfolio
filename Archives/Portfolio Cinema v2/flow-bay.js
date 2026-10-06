@@ -14,16 +14,26 @@
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let W = 0, H = 0;
+  // W × H is the logical drawing size. On a stage narrower than the
+  // layout needs, the drawing switches to a compact arrangement
+  // (split module header, slimmer gates) and is scaled by S ≤ 1 to the
+  // stage width — it never overflows and gets clipped.
+  let W = 0, H = 0, S = 1, compact = false;
+  let controls = null;
+  const FULL_W = 560, COMPACT_W = 440;
   let regions = {};
   const PAD = 16;
+  // The transport controls (HTML, 28 css px) get their own band under
+  // the waveform instead of sitting on top of it and the q readout.
+  const CTRL_H = 28;
+  const barH = () => CTRL_H / S + PAD;
 
   function layoutRegions() {
     const usableW = W - PAD * 2;
-    const svH = 84;
+    const svH = compact ? 98 : 84;
     const wfH = 92;
     const gaps = 8 * 3;
-    const remain = (H - PAD * 2) - svH - wfH - gaps;
+    const remain = (H - PAD * 2) - barH() - svH - wfH - gaps;
     const rtlH = Math.floor(remain * 0.5);
     const layH = remain - rtlH;
     const y = PAD;
@@ -37,13 +47,17 @@
 
   function resize() {
     const r = host.getBoundingClientRect();
-    W = Math.max(560, r.width);
-    H = Math.max(380, r.height);
-    canvas.width  = W * DPR;
-    canvas.height = H * DPR;
-    canvas.style.width  = W + 'px';
-    canvas.style.height = H + 'px';
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (!r.width || !r.height) return;
+    compact = r.width < FULL_W;
+    W = Math.max(compact ? COMPACT_W : FULL_W, r.width);
+    S = r.width / W;
+    H = Math.max(380, r.height / S);
+    canvas.width  = Math.round(W * S * DPR);
+    canvas.height = Math.round(H * S * DPR);
+    canvas.style.width  = W * S + 'px';
+    canvas.style.height = H * S + 'px';
+    ctx.setTransform(DPR * S, 0, 0, DPR * S, 0, 0);
+    if (controls) controls.style.right = controls.style.bottom = PAD * S + 'px';
     layoutRegions();
   }
 
@@ -97,13 +111,16 @@
     if (s[0] === 'q')  return (q >> +s[1]) & 1;
     return 0;
   }
+  // Gold (the page accent, rgb 224 185 108) is reserved for the live
+  // readout and the now-cursor; routine q[] traces stay neutral.
+  const Q_HI = 'rgba(245,242,235,0.82)', Q_LO = 'rgba(245,242,235,0.22)';
   const COL = {
     clk:   ['#FF6B9D', 'rgba(255,107,157,0.30)'],
     rst_n: ['#FF7A7A', 'rgba(255,122,122,0.30)'],
-    q0:    ['#FFC75A', 'rgba(255,199,90,0.28)'],
-    q1:    ['#FFC75A', 'rgba(255,199,90,0.28)'],
-    q2:    ['#FFC75A', 'rgba(255,199,90,0.28)'],
-    q3:    ['#FFC75A', 'rgba(255,199,90,0.28)'],
+    q0:    [Q_HI, Q_LO],
+    q1:    [Q_HI, Q_LO],
+    q2:    [Q_HI, Q_LO],
+    q3:    [Q_HI, Q_LO],
     add:   ['#9B7BFF', 'rgba(155,123,255,0.30)'],
   };
   const HOT = '#5AD3FF';
@@ -132,7 +149,7 @@
     ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
     ctx.stroke();
-    ctx.fillStyle = 'rgba(255,199,90,0.55)';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '500 9px "JetBrains Mono", monospace';
     const tw = ctx.measureText(title).width;
     ctx.fillText(title, r.x + r.w - tw - 10, r.y + 13);
@@ -154,11 +171,19 @@
     panel(r, 'src · counter4.sv');
     const KW  = 'rgba(155,123,255,0.92)';
     const ID  = 'rgba(245,242,235,0.96)';
-    const NUM = 'rgba(255,199,90,0.92)';
-    const OP  = 'rgba(245,242,235,0.42)';
     const STR = 'rgba(122,184,255,0.92)';
+    const NUM = STR;                       // literals share one hue
+    const OP  = 'rgba(245,242,235,0.42)';
+    const header = compact
+      ? [
+          [[KW,'module '],[ID,'counter4'],[OP,' ('],[KW,'input '],[KW,'logic '],[ID,'clk'],[OP,', '],[ID,'rst_n'],[OP,',']],
+          [[OP,'                 '],[KW,'output '],[KW,'logic '],[OP,'[3:0] '],[ID,'q'],[OP,');']],
+        ]
+      : [
+          [[KW,'module '],[ID,'counter4'], [OP,' ('],[KW,'input '],[KW,'logic '],[ID,'clk'],[OP,', '],[ID,'rst_n'],[OP,', '],[KW,'output '],[KW,'logic '],[OP,'[3:0] '],[ID,'q'],[OP,');']],
+        ];
     const lines = [
-      [[KW,'module '],[ID,'counter4'], [OP,' ('],[KW,'input '],[KW,'logic '],[ID,'clk'],[OP,', '],[ID,'rst_n'],[OP,', '],[KW,'output '],[KW,'logic '],[OP,'[3:0] '],[ID,'q'],[OP,');']],
+      ...header,
       [[OP,'  '],[KW,'always_ff '],[OP,'@('],[KW,'posedge '],[ID,'clk'],[OP,')']],
       [[OP,'    '],[ID,'q '],[OP,'<= '],[ID,'rst_n '],[OP,'? '],[ID,'q '],[OP,'+ '],[NUM,'1 '],[OP,': '],[STR,"'0"],[OP,';']],
       [[KW,'endmodule']],
@@ -186,15 +211,17 @@
     const cy       = r.y + r.h * 0.52;
 
     // Adder block
-    const addX = r.x + 24, addY = cy - 30, addW = 70, addH = 60;
+    const addW = compact ? 52 : 70, addH = compact ? 52 : 60;
+    const addX = r.x + 24, addY = cy - addH / 2;
     drawBlock(addX, addY, addW, addH, '+1', 'add');
 
     // Four DFFs
-    const dffW = 54, dffH = 50;
-    const slotW = (r.w - 100 - 40) / 4;
+    const dffW = compact ? 40 : 54, dffH = compact ? 44 : 50;
+    const slot0 = addX + addW + (compact ? 22 : 38);
+    const slotW = (r.x + r.w - 8 - slot0) / 4;
     const dffXs = [];
     for (let i = 0; i < 4; i++) {
-      const x = addX + addW + 38 + i * slotW + (slotW - dffW) / 2;
+      const x = slot0 + i * slotW + (slotW - dffW) / 2;
       dffXs.push(x);
       drawDFF(x, cy - dffH / 2, dffW, dffH, i);
     }
@@ -213,7 +240,7 @@
       const x = dffXs[i] + dffW;
       const sig = 'q' + i;
       poly([[x, cy], [x + 8, cy], [x + 8, qBusY]], sig);
-      sigLabel(x + 14, cy + 4, 'q[' + i + ']', sig);
+      sigLabel(x + (compact ? 12 : 14), cy + 4, 'q[' + i + ']', sig);
     }
     // bundled feedback rail (purple, combinational)
     poly([
@@ -377,7 +404,7 @@
     ctx.stroke();
   }
   function drawVia(x, y) {
-    ctx.fillStyle = 'rgba(255,199,90,0.95)';
+    ctx.fillStyle = 'rgba(245,242,235,0.7)';
     ctx.fillRect(x - 2, y - 2, 4, 4);
   }
 
@@ -386,13 +413,16 @@
     const r = regions.wf;
     panel(r, 'wave · q[3:0]');
     const tracks = ['clk', 'q3', 'q2', 'q1', 'q0'];
-    const trackH = (r.h - 18) / tracks.length;
+    // Tracks start under the panel title, so the clk trace never runs
+    // through it.
+    const top = r.y + 18;
+    const trackH = (r.h - 24) / tracks.length;
     const xL = r.x + 58;
     const xR = r.x + r.w - 16;
     const stepW = (xR - xL) / HIST_MAX;
     for (let ti = 0; ti < tracks.length; ti++) {
       const sig = tracks[ti];
-      const cy = r.y + 9 + trackH * ti + trackH / 2;
+      const cy = top + trackH * ti + trackH / 2;
       ctx.strokeStyle = 'rgba(255,255,255,0.05)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -403,7 +433,7 @@
       ctx.font = '500 10px "JetBrains Mono", monospace';
       const txt = sig === 'clk' ? 'clk' : 'q[' + sig.slice(1) + ']';
       ctx.fillText(txt, r.x + 12, cy + 3);
-      ctx.strokeStyle = hot ? HOT : (sig === 'clk' ? '#FF6B9D' : '#FFC75A');
+      ctx.strokeStyle = hot ? HOT : (sig === 'clk' ? '#FF6B9D' : Q_HI);
       ctx.lineWidth = hot ? 2 : 1.5;
       ctx.beginPath();
       const hi = -trackH * 0.32;
@@ -425,18 +455,24 @@
       hitBox(r.x + 6, cy - trackH / 2 + 2, r.w - 12, trackH - 4, sig);
     }
     // now-cursor
-    ctx.strokeStyle = 'rgba(255,199,90,0.45)';
+    ctx.strokeStyle = 'rgba(224,185,108,0.45)';
     ctx.setLineDash([3, 3]);
     ctx.beginPath();
     ctx.moveTo(xR, r.y + 8); ctx.lineTo(xR, r.y + r.h - 6);
     ctx.stroke();
     ctx.setLineDash([]);
-    // q hex
+  }
+
+  // Transport band: the live value (the one gold, active readout) on
+  // the left, level with the HTML controls on the right.
+  function drawBar() {
+    const cy = H - PAD - CTRL_H / S / 2;
     const hex = "q = 4'h" + q.toString(16).toUpperCase();
-    ctx.font = '500 11px "JetBrains Mono", monospace';
-    const tw = ctx.measureText(hex).width;
-    ctx.fillStyle = 'rgba(255,199,90,0.95)';
-    ctx.fillText(hex, xR - tw, r.y + r.h - 4);
+    ctx.font = `500 ${(11 / S).toFixed(2)}px "JetBrains Mono", monospace`;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(224,185,108,0.95)';
+    ctx.fillText(hex, PAD + 4, cy);
+    ctx.textBaseline = 'alphabetic';
   }
 
   // ─── Render loop ──────────────────────────────────────────
@@ -447,6 +483,7 @@
     drawRTL();
     drawLayout();
     drawWF();
+    drawBar();
     // resolve hover (last hit wins, so waveform tracks win over panels)
     let newHover = null;
     for (let i = hits.length - 1; i >= 0; i--) {
@@ -483,13 +520,14 @@
   // ─── Mouse ────────────────────────────────────────────────
   canvas.addEventListener('mousemove', (e) => {
     const r = canvas.getBoundingClientRect();
-    mouseX = e.clientX - r.left;
-    mouseY = e.clientY - r.top;
+    mouseX = (e.clientX - r.left) / S;
+    mouseY = (e.clientY - r.top) / S;
   });
   canvas.addEventListener('mouseleave', () => { mouseX = -1; mouseY = -1; });
 
   // ─── Controls ─────────────────────────────────────────────
-  const controls = document.createElement('div');
+  // (`controls` is declared up top; resize() positions it.)
+  controls = document.createElement('div');
   controls.className = 'flow-controls';
   controls.innerHTML = `
     <button data-act="run"   title="run">▶</button>
@@ -521,7 +559,10 @@
   // ─── Init ─────────────────────────────────────────────────
   resize();
   reset();
-  window.addEventListener('resize', resize);
+  // Follow the stage itself, not just the window — its width also
+  // changes when the squircle pass drops the bay's border.
+  if ('ResizeObserver' in window) new ResizeObserver(resize).observe(host);
+  else window.addEventListener('resize', resize);
   if ('IntersectionObserver' in window) {
     new IntersectionObserver((entries) => {
       visible = entries[entries.length - 1].isIntersecting;

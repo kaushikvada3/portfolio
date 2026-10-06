@@ -1,0 +1,1657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kaushik Vada — Glass</title>
+<meta name="description" content="Kaushik Vada is a Physical Design Intern at Tenstorrent and an electrical engineering student at UC Riverside, working in physical design, static timing analysis, and RTL design.">
+<meta name="author" content="Kaushik Vada">
+<meta name="theme-color" content="#060607">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23060607'/%3E%3Crect x='8' y='8' width='16' height='16' rx='2' fill='none' stroke='%23E0B96C' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23E0B96C'/%3E%3C/svg%3E">
+<script>
+  document.documentElement.classList.add('js');
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  // Failsafe: if the main script never runs, never leave the windows invisible.
+  setTimeout(function () { document.documentElement.classList.add('mat-done'); }, 3000);
+</script>
+<style>
+  /* ───────────────────────── Tokens ───────────────────────── */
+  :root {
+    color-scheme: dark;
+    --canvas: #060607;
+
+    --ink-1: rgba(255, 255, 255, 0.96);   /* primary */
+    --ink-2: rgba(255, 255, 255, 0.78);   /* secondary */
+    --ink-3: rgba(255, 255, 255, 0.54);   /* metadata */
+    --ink-4: rgba(255, 255, 255, 0.30);   /* marks, never text */
+    --gold: rgba(224, 185, 108, 1);       /* importance / active only */
+
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* One spacing scale, in rem so it grows with the reader's text size */
+    --s1: 0.25rem;  --s2: 0.5rem;  --s3: 0.75rem; --s4: 1rem;
+    --s5: 1.5rem;   --s6: 2rem;    --s7: 2.5rem;  --s8: 3.5rem;  --s9: 5rem;
+
+    --r-win: 1.75rem;
+    --r-plat: 1.125rem;
+    --r-item: 0.75rem;
+
+    /* Materials — weight encodes hierarchy.
+       Heavy: structural sidebar. Light: content window. Bar: phone tab bar. */
+    --mat-heavy: rgba(7, 7, 9, 0.64);
+    --mat-heavy-fx: blur(56px) saturate(140%);
+    --mat-light: rgba(255, 255, 255, 0.04);
+    --mat-light-fx: blur(18px) saturate(160%);
+    --mat-bar: rgba(28, 28, 32, 0.56);
+    --mat-bar-fx: blur(30px) saturate(170%);
+    --edge: inset 0 0 0 1px rgba(255, 255, 255, 0.055);
+    --shadow-heavy: 0 2px 6px rgba(0, 0, 0, 0.35), 0 32px 90px rgba(0, 0, 0, 0.62);
+    --shadow-light: 0 1px 3px rgba(0, 0, 0, 0.22), 0 24px 70px rgba(0, 0, 0, 0.44);
+
+    /* Inner surfaces are solid-ish platters — never glass on glass */
+    --platter: rgba(38, 38, 43, 0.84);
+    --platter-hover: rgba(46, 46, 52, 0.9);
+    --hair: rgba(255, 255, 255, 0.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--canvas);
+    color: var(--ink-1);
+    font-family: var(--font);
+    font-size: 1rem;
+    line-height: 1.6;
+    font-weight: 400;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow: hidden;
+    overflow-anchor: none;
+  }
+  h1, h2, h3, h4, p, ul, dl, dd, figure { margin: 0; }
+  ul { padding: 0; list-style: none; }
+  a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
+  ::selection { background: rgba(255, 255, 255, 0.22); }
+  :focus-visible { outline: 2px solid rgba(255, 255, 255, 0.9); outline-offset: 2px; }
+  :focus:not(:focus-visible) { outline: none; }
+  [tabindex="-1"]:focus { outline: none; }
+
+  .ico {
+    width: 1em; height: 1em; flex: none;
+    fill: none; stroke: currentColor; stroke-width: 1.6;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+  .vh {
+    position: absolute !important; width: 1px; height: 1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .skip {
+    position: fixed; z-index: 100; left: var(--s4); top: var(--s4);
+    padding: var(--s3) var(--s4); border-radius: var(--r-item);
+    background: #1d1d21; color: var(--ink-1);
+    font-size: 0.875rem; font-weight: 600;
+    transform: translateY(-300%);
+  }
+  .skip:focus-visible { transform: none; }
+
+  /* ───────────────────── Static die backdrop ───────────────────── */
+  .die {
+    position: fixed; inset: 0; z-index: 0;
+    width: 100%; height: 100%;
+    display: block; pointer-events: none;
+  }
+
+  /* ───────────────────────── Stage ───────────────────────── */
+  .stage {
+    position: relative; z-index: 1;
+    display: grid;
+    grid-template-columns: 16.5rem minmax(0, 1fr);
+    gap: 1.25rem;
+    height: 100vh; height: 100dvh;
+    max-width: 81rem;
+    margin: 0 auto;
+    padding: var(--s7);
+  }
+
+  /* ───────────────────────── Windows ───────────────────────── */
+  .win { position: relative; min-height: 0; border-radius: var(--r-win); isolation: isolate; }
+  .win-side {
+    background: var(--mat-heavy);
+    -webkit-backdrop-filter: var(--mat-heavy-fx);
+            backdrop-filter: var(--mat-heavy-fx);
+    box-shadow: var(--edge), var(--shadow-heavy);
+  }
+  .win-main {
+    background: var(--mat-light);
+    -webkit-backdrop-filter: var(--mat-light-fx);
+            backdrop-filter: var(--mat-light-fx);
+    box-shadow: var(--edge), var(--shadow-light);
+    overflow: hidden;
+  }
+  .js .win-side:not(.is-in), .js .win-main:not(.is-in) { opacity: 0; }
+  .mat-done .win-side, .mat-done .win-main, .mat-done .side-nav { opacity: 1; }
+
+  /* Specular edge: a 1px ring lit brightest along the top edge, plus a
+     soft hotspot that follows the pointer (driven by a Spring2D). */
+  .spec {
+    position: absolute; inset: 0; z-index: 5;
+    border-radius: inherit; padding: 1px;
+    pointer-events: none; overflow: hidden;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  }
+  .spec::before {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05) 14%,
+      rgba(255, 255, 255, 0.02) 60%, rgba(255, 255, 255, 0.035));
+  }
+  .spec-blob {
+    position: absolute; left: 0; top: -6rem;
+    width: 26rem; height: 12rem;
+    background: radial-gradient(closest-side, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0));
+    opacity: 0.3;
+    transform: translate3d(2rem, 0, 0);
+  }
+
+  /* ───────────────────────── Sidebar ───────────────────────── */
+  .win-inner {
+    height: 100%;
+    display: flex; flex-direction: column;
+    padding: 1.75rem 0.875rem 1.25rem;
+    overflow-y: auto; scrollbar-width: none;
+  }
+  .win-inner::-webkit-scrollbar { display: none; }
+  .side-head { padding: 0 0.875rem; margin-bottom: 2.25rem; }
+  .side-name {
+    font-size: 1.25rem; font-weight: 700; line-height: 1.2;
+    letter-spacing: -0.018em; color: var(--ink-1);
+  }
+  .side-desc {
+    margin-top: 0.375rem;
+    font-size: 0.8125rem; line-height: 1.45; font-weight: 500;
+    letter-spacing: 0.004em; color: var(--ink-2);
+  }
+  .side-res { display: none; }
+
+  .nav-track { position: relative; }
+  .nav-sel {
+    position: absolute; left: 0; top: 0; width: 100%; height: 2.75rem;
+    border-radius: var(--r-item);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.08);
+    pointer-events: none;
+  }
+  html:not(.js) .nav-sel { display: none; }
+  .nav-list { position: relative; display: flex; flex-direction: column; gap: 0.125rem; }
+  .nav-list a {
+    display: flex; align-items: center;
+    height: 2.75rem; padding: 0 0.875rem;
+    border-radius: var(--r-item);
+    color: var(--ink-2);
+    font-size: 0.9375rem; font-weight: 500; letter-spacing: 0.003em;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+  .nav-in { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+  .nav-ico { font-size: 1.125rem; opacity: 0.66; transition: opacity 0.2s ease; }
+  .nav-list a:not([aria-current]):hover { color: var(--ink-1); background: rgba(255, 255, 255, 0.04); }
+  .nav-list a:not([aria-current]):active { background: rgba(255, 255, 255, 0.07); }
+  .nav-list a[aria-current] { color: var(--ink-1); font-weight: 600; }
+  .nav-list a[aria-current] .nav-ico { opacity: 1; }
+
+  .side-foot { margin-top: auto; padding-top: var(--s5); }
+  .foot-link {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--s2);
+    min-height: 2.25rem; padding: 0 0.875rem;
+    border-radius: 0.625rem;
+    font-size: 0.8125rem; font-weight: 500; letter-spacing: 0.004em;
+    color: var(--ink-3);
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+  .foot-link:hover { color: var(--ink-2); background: rgba(255, 255, 255, 0.04); }
+  .foot-link:active { opacity: 0.7; }
+  .foot-link .ico { font-size: 0.875rem; opacity: 0.8; }
+
+  /* ─────────────────────── Main window ─────────────────────── */
+  .scroller {
+    position: absolute; inset: 0;
+    overflow-x: hidden; overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+    /* Scroll-edge effect instead of a divider */
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 1.5rem, #000 calc(100% - 2.5rem), transparent);
+            mask-image: linear-gradient(to bottom, transparent, #000 1.5rem, #000 calc(100% - 2.5rem), transparent);
+  }
+  .scroller:focus-visible { outline: none; }
+  .win-main:has(.scroller:focus-visible) { box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6), var(--shadow-light); }
+  .panes { position: relative; min-height: 100%; overflow: clip; }
+  .pane { padding: var(--s8) var(--s8) 4rem; }
+  .js .pane { position: absolute; top: 0; left: 0; right: 0; opacity: 0; visibility: hidden; }
+  .js .pane.is-active { position: relative; opacity: 1; visibility: visible; }
+  .main-foot { display: none; }
+
+  /* ─────────────────────── Typography ─────────────────────── */
+  .t-meta {
+    font-family: var(--mono);
+    font-size: 0.75rem; line-height: 1.4; font-weight: 500;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .t-title {
+    font-size: clamp(1.875rem, 1.25rem + 1.3vw, 2.5rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.028em;
+    color: var(--ink-1);
+  }
+  .pane-head { margin-bottom: var(--s7); }
+  .pane-head .t-meta { margin-bottom: var(--s3); }
+  .pane-sub {
+    margin-top: var(--s3); max-width: 40rem;
+    font-size: 1.0625rem; line-height: 1.5; font-weight: 450;
+    letter-spacing: -0.004em; color: var(--ink-2);
+  }
+  .now { color: var(--gold); }
+  .now::before {
+    content: ""; display: inline-block;
+    width: 0.375rem; height: 0.375rem; margin-right: 0.5rem;
+    border-radius: 50%; background: var(--gold);
+    vertical-align: 0.08em;
+  }
+
+  /* ───────────────────────── Overview ───────────────────────── */
+  .pane-overview { display: flex; flex-direction: column; min-height: calc(100dvh - 5rem); }
+  .hero {
+    max-width: 15em;
+    font-size: clamp(2.375rem, 1.5rem + 2.4vw, 3.625rem);
+    font-weight: 700; line-height: 1.04; letter-spacing: -0.034em;
+    color: var(--ink-1);
+    text-wrap: balance;
+  }
+  .lede {
+    margin-top: var(--s5); max-width: 37rem;
+    font-size: 1.1875rem; line-height: 1.55; font-weight: 450;
+    letter-spacing: -0.008em; color: var(--ink-2);
+    text-wrap: pretty;
+  }
+  .facts-row {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--s5); margin-top: var(--s7); max-width: 46rem;
+  }
+  .facts-row dt { margin-bottom: 0.375rem; }
+  .facts-row dd {
+    font-size: 0.9375rem; line-height: 1.45; font-weight: 500;
+    letter-spacing: 0.002em; color: var(--ink-1);
+  }
+  .facts-row dd span { display: block; font-weight: 450; color: var(--ink-2); }
+  .chips {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.875rem; margin-top: auto; padding-top: var(--s8);
+  }
+  .chip {
+    display: flex; flex-direction: column;
+    padding: 1.25rem 1.25rem 1.375rem;
+    border-radius: var(--r-plat);
+    background: var(--platter);
+  }
+  .chip-v {
+    font-size: 2rem; font-weight: 650; line-height: 1.1;
+    letter-spacing: -0.03em; color: var(--ink-1);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .chip-l {
+    margin-top: var(--s2);
+    font-size: 0.875rem; line-height: 1.45; font-weight: 450;
+    letter-spacing: 0.002em; color: var(--ink-2);
+  }
+  .chip .t-meta { margin-bottom: var(--s3); font-size: 0.6875rem; }
+  /* A goal, not a result: same shape, quieter figure */
+  .chip-goal .chip-v { color: var(--ink-2); font-weight: 600; }
+
+  /* ──────────────────────── Experience ──────────────────────── */
+  .role + .role { margin-top: var(--s9); }
+  .role .t-meta { margin-bottom: var(--s3); }
+  .role-co {
+    font-size: 1.5rem; font-weight: 700; line-height: 1.15;
+    letter-spacing: -0.02em; color: var(--ink-1);
+  }
+  .role-title {
+    margin-top: 0.3125rem;
+    font-size: 1.0625rem; line-height: 1.4; font-weight: 500;
+    letter-spacing: -0.004em; color: var(--ink-2);
+  }
+  .bullets { margin-top: 1.125rem; max-width: 44rem; }
+  .bullets li {
+    position: relative; padding-left: 1.125rem;
+    font-size: 0.96875rem; line-height: 1.62; font-weight: 430;
+    letter-spacing: 0.003em; color: var(--ink-2);
+    text-wrap: pretty;
+  }
+  .bullets li + li { margin-top: 0.625rem; }
+  .bullets li::before {
+    content: ""; position: absolute; left: 0.125rem; top: 0.66em;
+    width: 0.3125rem; height: 0.3125rem; border-radius: 50%;
+    background: var(--ink-4);
+  }
+  .bullets strong { font-weight: 600; color: var(--ink-1); }
+
+  /* ───────────────────────── Project ───────────────────────── */
+  .pane-head .pane-tags { margin: var(--s4) 0 0; }
+
+  /* ───────────────────────── Skills ───────────────────────── */
+  .modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.875rem; max-width: 46rem; }
+  .module {
+    position: relative;
+    display: flex; flex-direction: column; justify-content: space-between; gap: var(--s5);
+    min-height: 10.5rem; padding: 1.125rem 1.25rem 1.25rem;
+    border: 0; border-radius: var(--r-plat);
+    background: var(--platter);
+    text-align: left; cursor: pointer;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+    transition: background-color 0.2s ease;
+  }
+  .module:hover { background: var(--platter-hover); }
+  .mod-top { display: flex; align-items: flex-start; justify-content: space-between; }
+  .mod-icon {
+    display: grid; place-items: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 1.25rem; color: var(--ink-1);
+  }
+  .mod-expand { font-size: 1rem; color: var(--ink-3); }
+  .mod-title {
+    display: block;
+    font-size: 1.125rem; font-weight: 650; line-height: 1.25;
+    letter-spacing: -0.012em; color: var(--ink-1);
+  }
+  .mod-sub {
+    display: block; margin-top: 0.25rem;
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font-size: 0.875rem; line-height: 1.4; font-weight: 450;
+    letter-spacing: 0.002em; color: var(--ink-2);
+  }
+
+  /* Expanded module — a solid panel, dims what's behind it */
+  .xp-layer { position: fixed; inset: 0; z-index: 50; pointer-events: none; }
+  .xp-scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); opacity: 0; touch-action: none; }
+  .xp-layer.is-open .xp-scrim { pointer-events: auto; }
+  .xp { position: absolute; left: 0; top: 0; pointer-events: auto; }
+  .xp[hidden] { display: none; }
+  .xp-bg {
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+    max-height: var(--xp-max, none);
+    transform-origin: 0 0;
+    border-radius: 1.5rem;
+    background: #19191c;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 2px 8px rgba(0, 0, 0, 0.4), 0 40px 100px rgba(0, 0, 0, 0.6);
+    touch-action: none; cursor: grab;
+  }
+  .xp-bg.is-dragging { cursor: grabbing; }
+  .xp-body {
+    display: flex; flex-direction: column; min-height: 0;
+    transform-origin: 0 0; padding: 0.625rem 1.5rem 0;
+  }
+  /* On short screens the list scrolls under the pinned header. The fade
+     lives inside the padding, so at rest nothing is dimmed. */
+  .xp-scroll {
+    min-height: 0; margin: 0 -1.5rem; padding: var(--s5) 1.5rem 1.75rem;
+    overflow-y: auto; overscroll-behavior: contain;
+    scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  }
+  .xp-scroll.is-scrollable:not(.at-top) { cursor: auto; }   /* the list owns the gesture here */
+  .xp-scroll.is-scrollable {
+    touch-action: pan-y;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--s5), #000 calc(100% - 1.75rem), transparent);
+            mask-image: linear-gradient(to bottom, transparent, #000 var(--s5), #000 calc(100% - 1.75rem), transparent);
+  }
+  /* Scrolled to the top: a pull down drags the sheet, a push up scrolls (iOS sheet) */
+  .xp-scroll.is-scrollable.at-top { touch-action: pan-y; touch-action: pan-down; }
+  .xp-scroll:focus-visible { outline-offset: -2px; border-radius: 0.75rem; }
+  .xp-grab {
+    width: 2.25rem; height: 0.3125rem; margin: 0 auto 0.875rem;
+    border-radius: 1rem; background: rgba(255, 255, 255, 0.18);
+  }
+  .xp-head { display: flex; align-items: center; gap: 0.875rem; }
+  .xp-title {
+    font-size: 1.375rem; font-weight: 700; line-height: 1.2;
+    letter-spacing: -0.018em; color: var(--ink-1);
+  }
+  .xp-head .t-meta { margin-top: 0.125rem; }
+  .xp-close {
+    display: grid; place-items: center; flex: none;
+    width: 2.75rem; height: 2.75rem; margin-left: auto;
+    border: 0; border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08); color: var(--ink-2);
+    font-size: 1.125rem; cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  .xp-close:hover { background: rgba(255, 255, 255, 0.13); color: var(--ink-1); }
+  .xp-close:active { background: rgba(255, 255, 255, 0.18); }
+  .xp-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s5); }
+  .xp-list li {
+    padding: 0.6875rem 0; border-top: 1px solid var(--hair);
+    font-size: 1.0625rem; line-height: 1.35; font-weight: 500;
+    letter-spacing: -0.004em; color: var(--ink-1);
+  }
+  .xp-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s5); }
+  .xp-groups .t-meta { padding-bottom: 0.5rem; }
+  .xp-groups .xp-list { grid-template-columns: 1fr; }
+  .xp-groups > div + div + div { margin-top: var(--s5); }
+  .xp-stack > div + div { margin-top: var(--s5); }
+
+  /* ──────────────────────── Education ──────────────────────── */
+  .edu .t-meta { margin-bottom: var(--s3); }
+  .facts {
+    display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 0.875rem; max-width: 44rem; margin-top: var(--s6);
+  }
+  .fact { padding: 1.125rem 1.25rem 1.25rem; border-radius: var(--r-plat); background: var(--platter); }
+  .fact dt { margin-bottom: 0.5rem; }
+  .gpa { font-size: 2rem; font-weight: 650; line-height: 1.1; letter-spacing: -0.03em; color: var(--gold); font-variant-numeric: tabular-nums; }
+  .gpa-of { margin-left: 0.25rem; font-size: 1rem; font-weight: 500; color: var(--ink-3); letter-spacing: 0; }
+  .honor { font-size: 1.0625rem; line-height: 1.4; font-weight: 600; letter-spacing: -0.006em; color: var(--ink-1); }
+  .course-h { margin-top: var(--s7); margin-bottom: var(--s3); }
+  .courses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--s5); max-width: 44rem; }
+  .courses li {
+    padding: 0.75rem 0; border-top: 1px solid var(--hair);
+    font-size: 1rem; line-height: 1.4; font-weight: 500;
+    letter-spacing: -0.002em; color: var(--ink-1);
+  }
+
+  /* ───────────────────────── Contact ───────────────────────── */
+  .primary-link {
+    display: inline-flex; flex-direction: column; gap: 0.375rem;
+    padding: var(--s1) 0;
+    touch-action: manipulation;
+  }
+  .primary-link .addr {
+    display: inline-flex; align-items: center; gap: 0.625rem;
+    font-size: clamp(1.375rem, 1rem + 1.2vw, 2rem); font-weight: 650; line-height: 1.2;
+    letter-spacing: -0.024em; color: var(--ink-1);
+    overflow-wrap: break-word;
+  }
+  .primary-link:hover .addr { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.2em; text-decoration-color: rgba(255, 255, 255, 0.3); }
+  .rows { max-width: 34rem; margin-top: var(--s7); border-radius: var(--r-plat); background: var(--platter); overflow: hidden; }
+  .row {
+    display: flex; align-items: center; gap: var(--s4);
+    min-height: 3.5rem; padding: 0 1.125rem;
+    touch-action: manipulation;
+    transition: background-color 0.2s ease;
+  }
+  .rows li + li .row { box-shadow: inset 0 1px 0 var(--hair); }
+  .row:hover { background: rgba(255, 255, 255, 0.04); }
+  .row:active { background: rgba(255, 255, 255, 0.07); }
+  .row-txt { flex: 1; min-width: 0; display: flex; align-items: center; gap: var(--s4); }
+  .row-txt .t-meta { width: 5.5rem; flex: none; }
+  .row-v { flex: 1; min-width: 0; font-size: 1rem; font-weight: 500; letter-spacing: -0.002em; color: var(--ink-1); overflow-wrap: break-word; }
+  .row .ico { font-size: 0.9375rem; color: var(--ink-3); }
+
+  /* Phone chrome */
+  .edge-fade { display: none; }
+
+  /* ───────────────────── Medium widths ───────────────────── */
+  @media (max-width: 68em) {
+    .stage { grid-template-columns: 14.5rem minmax(0, 1fr); gap: 1rem; padding: var(--s5); }
+    .pane { padding: var(--s7) var(--s7) var(--s8); }
+    .pane-overview { min-height: calc(100dvh - 3rem); }
+    .chip-v { font-size: 1.75rem; }
+  }
+  @media (max-width: 60em) {
+    .chips { grid-template-columns: 1fr; }
+    .chip { flex-direction: row; flex-wrap: wrap; align-items: baseline; column-gap: var(--s4); }
+    .chip-l { flex: 1 1 12rem; margin-top: 0; }
+    .chip .t-meta { width: 100%; margin-bottom: var(--s2); }
+  }
+
+  /* Short laptop screens: tighten the vertical rhythm so a pane composes in one window */
+  @media (max-height: 50em) and (min-width: 52em) {
+    .stage { padding-block: var(--s5); }
+    .pane { padding-top: var(--s7); padding-bottom: var(--s7); }
+    .pane-overview { min-height: calc(100dvh - 3rem); }
+    .lede { font-size: 1.125rem; max-width: 40rem; }
+    .facts-row { margin-top: var(--s6); }
+    .chips { padding-top: var(--s6); }
+  }
+
+  /* ────────────────────────── Phones ────────────────────────── */
+  @media (max-width: 51.99em) {
+    html, body { height: auto; }
+    body { overflow: visible; overflow-x: clip; }
+    .stage { display: block; height: auto; max-width: none; padding: 0; z-index: auto; }
+    .win { border-radius: 0; isolation: auto; }
+    .win > .spec { display: none; }
+    .win-side, .win-main {
+      background: none; box-shadow: none;
+      -webkit-backdrop-filter: none; backdrop-filter: none;
+    }
+    .js .win-side:not(.is-in), .js .win-main:not(.is-in) { opacity: 1; }
+    .win-main { overflow: visible; }
+    .win-inner { display: block; height: auto; padding: 0; overflow: visible; }
+
+    .side-head {
+      display: flex; align-items: center; justify-content: space-between; gap: var(--s4);
+      margin: 0; padding: calc(env(safe-area-inset-top) + 1.25rem) var(--s4) 0;
+    }
+    .side-name { font-size: 1.0625rem; letter-spacing: -0.012em; }
+    .side-desc { margin-top: 0.125rem; font-size: 0.75rem; }
+    .side-res {
+      display: inline-flex; align-items: center; gap: 0.375rem; flex: none;
+      min-height: 2.75rem; padding: 0 var(--s4);
+      border-radius: 1.375rem; background: var(--platter);
+      font-size: 0.875rem; font-weight: 600; color: var(--ink-1);
+      touch-action: manipulation;
+    }
+    .side-res .ico { font-size: 0.8125rem; color: var(--ink-3); }
+    .side-foot { display: none; }
+
+    /* Sidebar becomes a floating translucent tab bar */
+    .side-nav {
+      position: fixed; z-index: 30;
+      left: var(--s4); right: var(--s4);
+      bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
+      padding: 0.3125rem;
+      border-radius: 2rem;
+      background: var(--mat-bar);
+      -webkit-backdrop-filter: var(--mat-bar-fx);
+              backdrop-filter: var(--mat-bar-fx);
+      box-shadow: var(--edge), inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    .js .side-nav:not(.is-in) { opacity: 0; }
+    .nav-list { flex-direction: row; gap: 0; }
+    .nav-list li { flex: 1 1 0; min-width: 0; }
+    .nav-list a {
+      justify-content: center;
+      height: 3.375rem; padding: 0 0.125rem;
+      border-radius: 1.6875rem;
+      font-size: 0.625rem; font-weight: 600; letter-spacing: -0.005em;
+    }
+    .nav-list a:not([aria-current]):hover { background: none; }
+    .nav-in { flex-direction: column; gap: 0.1875rem; }
+    .nav-ico { font-size: 1.375rem; }
+    .nav-sel { border-radius: 1.6875rem; background: rgba(255, 255, 255, 0.12); }
+
+    .scroller { position: static; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+    .pane { padding: var(--s6) var(--s4) var(--s7); }
+    .pane-overview { min-height: 0; }
+    .hero { font-size: 2.375rem; }
+    .lede { font-size: 1.0625rem; }
+    .facts-row { grid-template-columns: 1fr; gap: var(--s4); }
+    .chips { padding-top: var(--s8); }
+    .chip { flex-direction: column; align-items: stretch; }
+    .chip-l { flex: none; margin-top: var(--s2); }
+    .chip .t-meta { margin-bottom: var(--s3); }
+    .role + .role { margin-top: var(--s8); }
+    .facts { grid-template-columns: 1fr; }
+    .modules { gap: 0.75rem; }
+    .module { min-height: 9.5rem; padding: 1rem; }
+    .mod-sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .courses { grid-template-columns: 1fr; }
+    .xp-list, .xp-groups { grid-template-columns: 1fr; }
+    .xp-groups > div + div { margin-top: var(--s5); }
+    /* Label over value, so a URL never breaks mid-handle */
+    .row { min-height: 4rem; padding-block: 0.625rem; }
+    .row-txt { flex-direction: column; align-items: flex-start; gap: 0.1875rem; }
+    .row-txt .t-meta { width: auto; }
+
+    .main-foot {
+      display: flex; flex-wrap: wrap; column-gap: var(--s5);
+      padding: 0 var(--s4) calc(env(safe-area-inset-bottom) + 7rem);
+    }
+    .main-foot a {
+      display: inline-flex; align-items: center; gap: 0.375rem;
+      min-height: 2.75rem;
+      font-size: 0.875rem; font-weight: 500; color: var(--ink-3);
+    }
+    .main-foot .ico { font-size: 0.8125rem; }
+
+    /* Scroll-edge fade where content meets the floating tab bar */
+    .edge-fade {
+      display: block; position: fixed; z-index: 25;
+      left: 0; right: 0; bottom: 0;
+      height: calc(env(safe-area-inset-bottom) + 8.5rem);
+      pointer-events: none;
+      /* Eased ramp: nearly opaque by the bar's top edge (4.5rem up), so no
+         platter edge reads as a second bar behind the capsule. */
+      background: linear-gradient(to bottom,
+        rgba(6, 6, 7, 0), rgba(6, 6, 7, 0.2) 12%, rgba(6, 6, 7, 0.55) 26%,
+        rgba(6, 6, 7, 0.86) 42%, rgba(6, 6, 7, 0.94) 60%, rgba(6, 6, 7, 0.96));
+    }
+    /* The content window is full-bleed here, so the whole canvas is seen
+       through it: the die is frosted once (static layer, never re-rastered
+       on scroll) and text never sits on hairline detail. */
+    .die { opacity: 0.85; filter: blur(14px) saturate(150%); }
+  }
+
+  /* ──────────────── Accessibility preferences ──────────────── */
+  @media (prefers-reduced-transparency: reduce) {
+    .win-side, .win-main, .side-nav {
+      -webkit-backdrop-filter: none !important;
+              backdrop-filter: none !important;
+    }
+    .win-side { background: #0b0b0d; }
+    .win-main { background: #141416; }
+    .spec-blob { display: none; }
+    .xp-scrim { background: rgba(0, 0, 0, 0.72); }
+  }
+  @media (prefers-reduced-transparency: reduce) and (max-width: 51.99em) {
+    .win-side, .win-main { background: none; }
+    .side-nav { background: #161619; }
+    .edge-fade { background: linear-gradient(to bottom, rgba(6, 6, 7, 0), var(--canvas) 60%); }
+    .die { opacity: 0.14; filter: none; }   /* solid, quiet canvas behind text */
+  }
+  @media (prefers-contrast: more) {
+    :root {
+      --ink-2: rgba(255, 255, 255, 0.9);
+      --ink-3: rgba(255, 255, 255, 0.76);
+      --ink-4: rgba(255, 255, 255, 0.6);
+      --platter: #1e1e22;
+      --platter-hover: #26262b;
+      --hair: rgba(255, 255, 255, 0.24);
+    }
+    .win-side, .win-main, .side-nav {
+      -webkit-backdrop-filter: none !important;
+              backdrop-filter: none !important;
+    }
+    .win-side { background: #09090b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36), var(--shadow-heavy); }
+    .win-main { background: #121214; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.36), var(--shadow-light); }
+    .spec { display: none; }
+    .chip, .fact, .module, .rows, .side-res { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28); }
+    .nav-sel { background: rgba(255, 255, 255, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55); }
+    .xp-bg { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4), 0 40px 100px rgba(0, 0, 0, 0.6); }
+    .die { opacity: 0.5; }
+  }
+  @media (prefers-contrast: more) and (max-width: 51.99em) {
+    .win-side, .win-main { background: none; box-shadow: none; }
+    .die { opacity: 0.14; filter: none; }
+    .side-nav { background: #141417; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></symbol>
+  <symbol id="i-experience" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7M3 12.5h18"/></symbol>
+  <symbol id="i-project" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9.5 2.5V6M14.5 2.5V6M9.5 18v3.5M14.5 18v3.5M2.5 9.5H6M2.5 14.5H6M18 9.5h3.5M18 14.5h3.5"/></symbol>
+  <symbol id="i-skills" viewBox="0 0 24 24"><path d="M4 6.5h9.5M17.5 6.5H20M4 12h3M11 12h9M4 17.5h11M19 17.5h1"/><circle cx="15.5" cy="6.5" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17.5" r="2"/></symbol>
+  <symbol id="i-education" viewBox="0 0 24 24"><path d="M2.5 9.5 12 5l9.5 4.5L12 14 2.5 9.5Z"/><path d="M6.5 11.6V16c1.4 1.5 3.3 2.5 5.5 2.5s4.1-1 5.5-2.5v-4.4M21.5 9.5v5"/></symbol>
+  <symbol id="i-contact" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.5 7.5 8.5 6 8.5-6"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8.5 7.5-4.5 4.5 4.5 4.5M15.5 7.5l4.5 4.5-4.5 4.5M13.5 5.5l-3 13"/></symbol>
+  <symbol id="i-tools" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.4-3.4a5.5 5.5 0 0 1-7.3 7.3l-6.2 6.2a2 2 0 0 1-2.8-2.8l6.2-6.2a5.5 5.5 0 0 1 7.3-7.3l-3.6 3.2Z"/></symbol>
+  <symbol id="i-graph" viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.2"/><circle cx="18" cy="9" r="2.2"/><circle cx="10" cy="18" r="2.2"/><path d="m8.2 7.4 7.6 1.2M16.5 10.7l-4.9 5.6M6.8 9.1l2.3 6.8"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8.5h15M15.5 5 19 8.5 15.5 12M20 15.5H5M8.5 12 5 15.5 8.5 19"/></symbol>
+  <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6M10 20H4v-6M20 4l-6.5 6.5M4 20l6.5-6.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+</svg>
+
+<a class="skip" href="#main" id="skip">Skip to content</a>
+
+<svg class="die" id="die" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"></svg>
+
+<div class="stage" id="stage">
+
+  <header class="win win-side" id="side">
+    <span class="spec" aria-hidden="true"><span class="spec-blob"></span></span>
+    <div class="win-inner">
+      <div class="side-head">
+        <div>
+          <h1 class="side-name">Kaushik Vada</h1>
+          <p class="side-desc">Physical design &amp; timing</p>
+        </div>
+        <a class="side-res" href="../../resume.pdf" target="_blank" rel="noopener">Résumé<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg><span class="vh"> (PDF, opens in a new tab)</span></a>
+      </div>
+
+      <nav class="side-nav" id="side-nav" aria-label="Sections">
+        <div class="nav-track">
+          <span class="nav-sel" id="nav-sel" aria-hidden="true"></span>
+          <ul class="nav-list" id="nav-list" role="list">
+            <li><a href="#overview" data-pane="overview" aria-current="page"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-overview"/></svg><span>Overview</span></span></a></li>
+            <li><a href="#experience" data-pane="experience"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-experience"/></svg><span>Experience</span></span></a></li>
+            <li><a href="#project" data-pane="project"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-project"/></svg><span>Project</span></span></a></li>
+            <li><a href="#skills" data-pane="skills"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-skills"/></svg><span>Skills</span></span></a></li>
+            <li><a href="#education" data-pane="education"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-education"/></svg><span>Education</span></span></a></li>
+            <li><a href="#contact" data-pane="contact"><span class="nav-in"><svg class="ico nav-ico" aria-hidden="true"><use href="#i-contact"/></svg><span>Contact</span></span></a></li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="side-foot">
+        <ul role="list">
+          <li><a class="foot-link" href="../../resume.pdf" target="_blank" rel="noopener"><span>Résumé<span class="vh"> (PDF, opens in a new tab)</span></span><svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a></li>
+          <li><a class="foot-link" href="./index.html"><span>All variations</span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></a></li>
+          <li><a class="foot-link" href="../../index.html"><span>Current site</span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></a></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main class="win win-main" id="main">
+    <span class="spec" aria-hidden="true"><span class="spec-blob"></span></span>
+    <div class="scroller" id="scroller" role="group" aria-labelledby="h-overview">
+      <div class="panes" id="panes">
+
+        <!-- ─────────── Overview ─────────── -->
+        <section class="pane pane-overview" id="pane-overview" aria-labelledby="h-overview">
+          <h2 class="vh" id="h-overview" tabindex="-1">Overview</h2>
+          <p class="hero">Physical design and timing for AI and CPU silicon.</p>
+          <p class="lede">I’m an electrical engineering student at UC Riverside and a Physical Design Intern at Tenstorrent, running static timing analysis on die-to-die interconnects in a next-generation AI accelerator SoC. At Arm, I delivered a tape-out candidate for an AGI-CPU SoC block, from floorplan through post-route optimization in Cadence Innovus.</p>
+          <dl class="facts-row">
+            <div><dt class="t-meta"><span class="now">Now</span></dt><dd>Tenstorrent<span>Physical Design Intern</span></dd></div>
+            <div><dt class="t-meta">Previously</dt><dd>Arm<span>SoC Physical Design Intern</span></dd></div>
+            <div><dt class="t-meta">Study</dt><dd>UC Riverside<span>B.S. Electrical Engineering</span></dd></div>
+          </dl>
+          <ul class="chips" role="list" aria-label="Highlights">
+            <li class="chip">
+              <span class="t-meta">Arm</span>
+              <span class="chip-v">18.4–19.5%</span>
+              <span class="chip-l">lower reported power from activity-driven power optimization, versus baselines under matched workloads</span>
+            </li>
+            <li class="chip">
+              <span class="t-meta">Arm</span>
+              <span class="chip-v">38.5%</span>
+              <span class="chip-l">reduction in measured mean RX data-path delay through setup-margin tuning</span>
+            </li>
+            <li class="chip chip-goal">
+              <span class="t-meta">Tenstorrent · Target</span>
+              <span class="chip-v">~46 → 10</span>
+              <span class="chip-l">PVT corners — the reduction targeted by AI/ML-based corner selection, currently under investigation</span>
+            </li>
+          </ul>
+        </section>
+
+        <!-- ─────────── Experience ─────────── -->
+        <section class="pane" id="pane-experience" aria-labelledby="h-experience">
+          <header class="pane-head">
+            <h2 class="t-title" id="h-experience" tabindex="-1">Experience</h2>
+            <p class="pane-sub">Two physical design internships and undergraduate research in RTL and synthesis.</p>
+          </header>
+
+          <article class="role" aria-labelledby="r-tt">
+            <p class="t-meta"><span class="now">Sep 2026 – Present</span> · Santa Clara, CA</p>
+            <h3 class="role-co" id="r-tt">Tenstorrent</h3>
+            <p class="role-title">Physical Design Intern</p>
+            <ul class="bullets">
+              <li>Perform static timing analysis (STA) on die-to-die interconnects in a next-generation AI accelerator SoC with RISC-V cores, using Synopsys PrimeTime with post-route netlists, SPEF parasitics, UPF power intent, and SDC constraints.</li>
+              <li>Analyze multi-voltage timing paths through level shifters connecting a dynamic-voltage SoC domain to a fixed-voltage PHY domain, evaluating voltage-dependent timing behavior.</li>
+              <li>Extract corner-specific parasitics using Synopsys StarRC on Fusion Compiler databases and configure automated RTL-to-GDS flows from synthesis through route optimization.</li>
+              <li>Investigate AI/ML-based corner selection targeting a reduction from <strong>approximately 46 PVT corners to 10</strong>, evaluating derating and guard-banding strategies to preserve timing coverage and reduce signoff turnaround.</li>
+            </ul>
+          </article>
+
+          <article class="role" aria-labelledby="r-arm">
+            <p class="t-meta">Jun 2026 – Sep 2026 · San Diego, CA</p>
+            <h3 class="role-co" id="r-arm">Arm</h3>
+            <p class="role-title">SoC Physical Design Intern</p>
+            <ul class="bullets">
+              <li>Delivered a tape-out candidate for an active ARM AGI-CPU SoC block, incorporating activity-driven power optimization and two-pass placement optimizations and executing the Cadence Innovus flow from floorplanning through placement, CTS, routing, and post-route optimization. The resulting implementation was advanced for downstream STA and timing evaluation.</li>
+              <li>Compared multiple FSDB activity profiles to guide selection based on power and timing, with activity-driven power optimization yielding <strong>18.4–19.5% lower reported power</strong> versus baselines under matched workloads.</li>
+              <li>Co-developed a two-pass placement flow with Cadence engineers, reducing estimated power by <strong>5.86%</strong> and cell area by <strong>2.45%</strong>.</li>
+              <li>Reduced measured mean RX data-path delay by <strong>38.5%</strong> using Codex-assisted statistical modeling of prior runs to guide setup-margin tuning, deliberately tightening constraints on positive-slack I/O paths to trigger optimization toward full-chip timing requirements.</li>
+              <li>Enabled reusable STA and PrimeTime PX workflows, developing analysis scripts to compare implementation results, audit generated Tcl/YAML against applied constraints, and support international engineering teams.</li>
+            </ul>
+          </article>
+
+          <article class="role" aria-labelledby="r-vsc">
+            <p class="t-meta">Sep 2025 – Apr 2026 · Riverside, CA</p>
+            <h3 class="role-co" id="r-vsc">VLSI Systems &amp; Computer Architecture Lab</h3>
+            <p class="role-title">Undergraduate Researcher · VSCLab, University of California, Riverside</p>
+            <ul class="bullets">
+              <li>Designing and implementing a custom open-source RISC-V CPU core, developing pipeline stages and verification infrastructure targeting full functional correctness.</li>
+              <li>Applying Verilog and Synopsys RTL-to-gate flows in an active research environment, reinforcing skills in synthesis and gate-level simulation.</li>
+              <li>Authoring and refining SDC timing constraints in Synopsys Design Compiler as part of the lab’s constraint-driven synthesis workflow.</li>
+            </ul>
+          </article>
+        </section>
+
+        <!-- ─────────── Project ─────────── -->
+        <section class="pane" id="pane-project" aria-labelledby="h-project">
+          <header class="pane-head">
+            <p class="t-meta"><span class="now">Mar 2026 – Present</span> · Project</p>
+            <h2 class="t-title" id="h-project" tabindex="-1">MiniGPU-2</h2>
+            <p class="pane-sub">Custom Graphics Accelerator ASIC</p>
+            <p class="t-meta pane-tags">SAED 32nm · Innovus · Design Compiler · Genus</p>
+          </header>
+          <ul class="bullets">
+            <li>Implementing floorplanning and place-and-route in Cadence Innovus on a SAED 32nm checkpoint, iterating on timing and congestion for a custom ASIC.</li>
+            <li>Worked with a team on RTL-to-gate synthesis in Synopsys Design Compiler and Cadence Genus for a SystemVerilog graphics pipeline spanning vertex transformation and rasterization.</li>
+            <li>Designed dual-clock asynchronous FIFOs with Gray-coded pointer synchronizers to support communication across clock domains.</li>
+          </ul>
+        </section>
+
+        <!-- ─────────── Skills ─────────── -->
+        <section class="pane" id="pane-skills" aria-labelledby="h-skills">
+          <header class="pane-head">
+            <h2 class="t-title" id="h-skills" tabindex="-1">Skills</h2>
+            <p class="pane-sub">Languages, tools, concepts, and protocols. Open a module to see everything in it.</p>
+          </header>
+          <div class="modules">
+            <button class="module" type="button" id="mod-languages" aria-haspopup="dialog" aria-expanded="false" aria-controls="xp-languages">
+              <span class="mod-top"><span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span><svg class="ico mod-expand" aria-hidden="true"><use href="#i-expand"/></svg></span>
+              <span><span class="mod-title">Languages</span><span class="mod-sub">Verilog · C/C++ · Python · TCL</span></span>
+            </button>
+            <button class="module" type="button" id="mod-tools" aria-haspopup="dialog" aria-expanded="false" aria-controls="xp-tools">
+              <span class="mod-top"><span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-tools"/></svg></span><svg class="ico mod-expand" aria-hidden="true"><use href="#i-expand"/></svg></span>
+              <span><span class="mod-title">Tools</span><span class="mod-sub">Synopsys · Cadence · Xilinx</span></span>
+            </button>
+            <button class="module" type="button" id="mod-concepts" aria-haspopup="dialog" aria-expanded="false" aria-controls="xp-concepts">
+              <span class="mod-top"><span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-graph"/></svg></span><svg class="ico mod-expand" aria-hidden="true"><use href="#i-expand"/></svg></span>
+              <span><span class="mod-title">Concepts</span><span class="mod-sub">Physical design · STA · CTS · and 6 more</span></span>
+            </button>
+            <button class="module" type="button" id="mod-protocols" aria-haspopup="dialog" aria-expanded="false" aria-controls="xp-protocols">
+              <span class="mod-top"><span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-swap"/></svg></span><svg class="ico mod-expand" aria-hidden="true"><use href="#i-expand"/></svg></span>
+              <span><span class="mod-title">Protocols</span><span class="mod-sub">UART · APB · Valid/Ready</span></span>
+            </button>
+          </div>
+        </section>
+
+        <!-- ─────────── Education ─────────── -->
+        <section class="pane" id="pane-education" aria-labelledby="h-education">
+          <header class="pane-head">
+            <h2 class="t-title" id="h-education" tabindex="-1">Education</h2>
+          </header>
+          <div class="edu">
+            <p class="t-meta">Aug 2023 – Jun 2027 · Riverside, CA</p>
+            <h3 class="role-co">University of California, Riverside</h3>
+            <p class="role-title">Bachelor of Science in Electrical Engineering</p>
+            <dl class="facts">
+              <div class="fact"><dt class="t-meta">GPA</dt><dd><span class="gpa">3.93</span><span class="gpa-of">/ 4.00</span></dd></div>
+              <div class="fact"><dt class="t-meta">Honor</dt><dd class="honor">University of California Regents Distinguished Scholar</dd></div>
+            </dl>
+            <h4 class="t-meta course-h">Relevant coursework</h4>
+            <ul class="courses">
+              <li>Introduction to VLSI</li>
+              <li>Data Structures and Algorithms</li>
+              <li>Design and Architecture of Computer Systems</li>
+              <li>Machine Organization and Assembly Language</li>
+              <li>Digital Logic Design</li>
+              <li>GPU Architecture and Programming</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- ─────────── Contact ─────────── -->
+        <section class="pane" id="pane-contact" aria-labelledby="h-contact">
+          <header class="pane-head">
+            <h2 class="t-title" id="h-contact" tabindex="-1">Contact</h2>
+          </header>
+          <a class="primary-link" href="mailto:kaushikvada3@gmail.com">
+            <span class="t-meta">Email</span>
+            <span class="addr">kaushikvada3<wbr>@gmail.com</span>
+          </a>
+          <ul class="rows" role="list">
+            <li><a class="row" href="https://www.linkedin.com/in/kaushikv198" target="_blank" rel="noopener"><span class="row-txt"><span class="t-meta">LinkedIn</span><span class="row-v">linkedin.com/in/<wbr>kaushikv198</span></span><svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a></li>
+            <li><a class="row" href="https://github.com/kaushikvada" target="_blank" rel="noopener"><span class="row-txt"><span class="t-meta">GitHub</span><span class="row-v">github.com/<wbr>kaushikvada</span></span><svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a></li>
+            <li><a class="row" href="tel:+18583058647"><span class="row-txt"><span class="t-meta">Phone</span><span class="row-v">858-305-8647</span></span><svg class="ico" aria-hidden="true"><use href="#i-chev"/></svg></a></li>
+            <li><a class="row" href="../../resume.pdf" target="_blank" rel="noopener"><span class="row-txt"><span class="t-meta">Résumé</span><span class="row-v">View PDF<span class="vh">, opens in a new tab</span></span></span><svg class="ico" aria-hidden="true"><use href="#i-out"/></svg></a></li>
+          </ul>
+        </section>
+
+      </div>
+      <footer class="main-foot">
+        <a href="../../resume.pdf" target="_blank" rel="noopener">Résumé<svg class="ico" aria-hidden="true"><use href="#i-out"/></svg><span class="vh"> (PDF, opens in a new tab)</span></a>
+        <a href="./index.html">All variations</a>
+        <a href="../../index.html">Current site</a>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<div class="edge-fade" aria-hidden="true"></div>
+
+<!-- Expanded skill modules (dialogs). Each grows out of its module. -->
+<div class="xp-layer" id="xp-layer">
+  <div class="xp-scrim" aria-hidden="true"></div>
+
+  <div class="xp" id="xp-languages" role="dialog" aria-modal="true" aria-labelledby="xp-languages-t" hidden>
+    <div class="xp-bg"><div class="xp-body">
+      <div class="xp-grab" aria-hidden="true"></div>
+      <div class="xp-head">
+        <span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-code"/></svg></span>
+        <div><h3 class="xp-title" id="xp-languages-t">Languages</h3><p class="t-meta">4 languages</p></div>
+        <button class="xp-close" type="button" aria-label="Close Languages"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="xp-scroll"><ul class="xp-list" role="list"><li>Verilog</li><li>C/C++</li><li>Python</li><li>TCL</li></ul></div>
+    </div></div>
+  </div>
+
+  <div class="xp" id="xp-tools" role="dialog" aria-modal="true" aria-labelledby="xp-tools-t" hidden>
+    <div class="xp-bg"><div class="xp-body">
+      <div class="xp-grab" aria-hidden="true"></div>
+      <div class="xp-head">
+        <span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-tools"/></svg></span>
+        <div><h3 class="xp-title" id="xp-tools-t">Tools</h3><p class="t-meta">7 tools · 3 vendors</p></div>
+        <button class="xp-close" type="button" aria-label="Close Tools"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="xp-scroll"><div class="xp-groups">
+        <div>
+          <p class="t-meta">Synopsys</p>
+          <ul class="xp-list" role="list"><li>PrimeTime</li><li>PrimeTime PX</li><li>Design Compiler</li><li>Fusion Compiler</li><li>VCS</li></ul>
+        </div>
+        <div class="xp-stack">
+          <div><p class="t-meta">Cadence</p><ul class="xp-list" role="list"><li>Innovus</li></ul></div>
+          <div><p class="t-meta">Xilinx</p><ul class="xp-list" role="list"><li>Vivado</li></ul></div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="xp" id="xp-concepts" role="dialog" aria-modal="true" aria-labelledby="xp-concepts-t" hidden>
+    <div class="xp-bg"><div class="xp-body">
+      <div class="xp-grab" aria-hidden="true"></div>
+      <div class="xp-head">
+        <span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-graph"/></svg></span>
+        <div><h3 class="xp-title" id="xp-concepts-t">Concepts</h3><p class="t-meta">9 concepts</p></div>
+        <button class="xp-close" type="button" aria-label="Close Concepts"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="xp-scroll"><ul class="xp-list" role="list">
+        <li>Physical Design</li><li>Floorplanning</li><li>Placement &amp; Routing</li>
+        <li>Clock Tree Synthesis (CTS)</li><li>Static Timing Analysis (STA)</li><li>SDC Timing Constraints</li>
+        <li>Power Analysis &amp; Optimization</li><li>RTL Design</li><li>Computer Architecture</li>
+      </ul></div>
+    </div></div>
+  </div>
+
+  <div class="xp" id="xp-protocols" role="dialog" aria-modal="true" aria-labelledby="xp-protocols-t" hidden>
+    <div class="xp-bg"><div class="xp-body">
+      <div class="xp-grab" aria-hidden="true"></div>
+      <div class="xp-head">
+        <span class="mod-icon"><svg class="ico" aria-hidden="true"><use href="#i-swap"/></svg></span>
+        <div><h3 class="xp-title" id="xp-protocols-t">Protocols</h3><p class="t-meta">3 protocols</p></div>
+        <button class="xp-close" type="button" aria-label="Close Protocols"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+      </div>
+      <div class="xp-scroll"><ul class="xp-list" role="list"><li>UART</li><li>APB</li><li>Valid/Ready Handshake</li></ul></div>
+    </div></div>
+  </div>
+</div>
+
+<script src="spring.js"></script>
+<script>
+(() => {
+  'use strict';
+  const root = document.documentElement;
+  const F = window.Fluid;
+  if (!F) { root.classList.add('mat-done'); return; }
+  const { Spring, Spring2D, VelocityTracker, clamp } = F;
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+
+  const MQ = {
+    reduced: matchMedia('(prefers-reduced-motion: reduce)'),
+    transp: matchMedia('(prefers-reduced-transparency: reduce)'),
+    contrast: matchMedia('(prefers-contrast: more)'),
+    mobile: matchMedia('(max-width: 51.99em)'),
+    fine: matchMedia('(hover: hover) and (pointer: fine)'),
+  };
+  const reduced = () => MQ.reduced.matches;
+  const mobile = () => MQ.mobile.matches;
+  const solid = () => MQ.transp.matches || MQ.contrast.matches;
+  const remPx = () => parseFloat(getComputedStyle(root).fontSize) || 16;
+
+  buildDie($('#die'));
+
+  const stage = $('#stage');
+  const side = $('#side');
+  const main = $('#main');
+  const sideNav = $('#side-nav');
+  const scroller = $('#scroller');
+  const panesEl = $('#panes');
+
+  /* ───────────────────────── Panes ─────────────────────────
+     Every pane owns a position spring (y) and an opacity spring (o).
+     A pane's resting place is a pure function of its index relative
+     to the active one: above (−D) if it comes before, below (+D) if
+     after. So "next" always leaves up and arrives from below, and any
+     retarget — however rapid — starts from the live values. */
+  const ORDER = ['overview', 'experience', 'project', 'skills', 'education', 'contact'];
+  let active = -1;
+  const offset = () => (reduced() ? 0 : mobile() ? 40 : 56);
+
+  const panes = ORDER.map((name, i) => {
+    const el = document.getElementById('pane-' + name);
+    const p = { name, i, el, base: 0 };
+    p.render = () => {
+      const ty = p.base + p.y.value;
+      el.style.transform = Math.abs(ty) < 0.01 ? '' : `translate3d(0,${ty.toFixed(2)}px,0)`;
+      el.style.opacity = p.o.value.toFixed(3);
+      el.style.visibility = p.i !== active && p.o.value <= 0.002 ? 'hidden' : 'visible';
+    };
+    p.y = new Spring(0, { dampingRatio: 1, response: 0.42, precision: 0.1, onUpdate: p.render, onRest: () => settle(p) });
+    p.o = new Spring(0, { dampingRatio: 1, response: 0.36, precision: 0.002, onUpdate: p.render, onRest: () => settle(p) });
+    return p;
+  });
+
+  // An invisible, resting pane parks on the side it belongs to.
+  function settle(p) {
+    if (p.i === active || p.y.animating || p.o.animating || p.o.value > 0.002) return;
+    p.base = 0;
+    p.y.set((Math.sign(p.i - active) || 1) * offset());
+  }
+
+  const getScroll = () => (mobile() ? window.scrollY : scroller.scrollTop);
+  const setScroll = v => (mobile() ? window.scrollTo({ top: v, behavior: 'instant' }) : (scroller.scrollTop = v));
+  const panesTop = () => (mobile() ? panesEl.getBoundingClientRect().top + window.scrollY : 0);
+
+  function go(name, { instant = false } = {}) {
+    const next = ORDER.indexOf(name);
+    if (next < 0 || next === active) return;
+    const prev = active;
+    active = next;
+    const D = offset();
+    const now = instant || prev < 0;
+
+    // The incoming pane starts at its top. Panes still on screen are
+    // shifted by the same amount so they don't jump while they leave.
+    const S = getScroll();
+    const top = Math.min(S, panesTop());
+    if (S !== top) {
+      if (!now) for (const p of panes) if (p.o.value > 0.002 || p.o.animating) p.base -= S - top;
+      setScroll(top);
+    }
+
+    for (const p of panes) {
+      const isNext = p.i === next;
+      p.el.classList.toggle('is-active', isNext);
+      p.el.inert = !isNext;
+      if (now) {
+        p.base = 0;
+        p.y.set(isNext ? 0 : Math.sign(p.i - next) * D);
+        p.o.set(isNext ? 1 : 0);
+      } else if (isNext) {
+        if (p.o.value <= 0.002 && !p.o.animating) {
+          p.base = 0;
+          p.y.set(Math.sign(next - prev) * D);          // forward: from below
+        } else if (p.base) {
+          p.y.value += p.base; p.base = 0;              // fold scroll shift into the spring
+          if (D) p.y.value = clamp(p.y.value, -1.5 * D, 1.5 * D);
+        }
+        p.y.to(0, { dampingRatio: 1, response: 0.42 });
+        p.o.to(1, { dampingRatio: 1, response: reduced() ? 0.24 : 0.36 });
+      } else if (p.i === prev) {
+        p.y.to(Math.sign(p.i - next) * D, { dampingRatio: 1, response: 0.42 }); // forward: out the top
+        p.o.to(0, { dampingRatio: 1, response: reduced() ? 0.18 : 0.2 });
+      } else if (p.o.value > 0.002 || p.o.animating) {
+        p.o.to(0, { dampingRatio: 1, response: 0.2 });  // keep leaving the way it was going
+      } else {
+        p.base = 0;
+        p.y.set(Math.sign(p.i - next) * D);
+      }
+      p.render();
+    }
+    scroller.setAttribute('aria-labelledby', 'h-' + name);
+    updateNav(now);
+    // History navigation while a module is open: its source module is now
+    // in an inert pane, so hand focus to the section's nav item instead.
+    const open = xps.find(x => x.open);
+    if (open) {
+      const hadFocus = open.panel.contains(document.activeElement);
+      closeXp(open, { restoreFocus: false });
+      if (hadFocus) navLinks[active].focus({ preventScroll: true });
+    }
+  }
+
+  /* ─────────────────────── Navigation ─────────────────────── */
+  const navList = $('#nav-list');
+  const navLinks = $$('a[data-pane]', navList);
+  const sel = $('#nav-sel');
+  const selS = new Spring2D(0, 0, {
+    dampingRatio: 1, response: 0.34, precision: 0.1,
+    onUpdate: (x, y) => { sel.style.transform = `translate3d(${x.toFixed(2)}px,${y.toFixed(2)}px,0)`; },
+  });
+
+  function updateNav(instant) {
+    // Roving tabindex: the list is one tab stop; arrows move within it.
+    navLinks.forEach((a, i) => {
+      if (i === active) { a.setAttribute('aria-current', 'page'); a.tabIndex = 0; }
+      else { a.removeAttribute('aria-current'); a.tabIndex = -1; }
+    });
+    const a = navLinks[active];
+    sel.style.width = a.offsetWidth + 'px';
+    sel.style.height = a.offsetHeight + 'px';
+    if (instant || reduced()) selS.set(a.offsetLeft, a.offsetTop);
+    else selS.to(a.offsetLeft, a.offsetTop, { dampingRatio: 1, response: 0.34 });
+  }
+
+  const fromHash = () => {
+    const h = decodeURIComponent(location.hash.slice(1));
+    return ORDER.includes(h) ? h : 'overview';
+  };
+  function select(name) {
+    if (ORDER[active] === name) return;
+    history.pushState(null, '', '#' + name);
+    go(name);
+  }
+
+  navList.addEventListener('click', e => {
+    const a = e.target.closest('a[data-pane]');
+    if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    select(a.dataset.pane);
+  });
+  navList.addEventListener('keydown', e => {
+    const i = navLinks.indexOf(document.activeElement);
+    if (i < 0) return;
+    const last = navLinks.length - 1;
+    const map = { ArrowDown: i + 1, ArrowRight: i + 1, ArrowUp: i - 1, ArrowLeft: i - 1, Home: 0, End: last };
+    if (!(e.key in map)) return;
+    e.preventDefault();
+    const j = clamp(map[e.key], 0, last);
+    navLinks[j].focus();
+    select(ORDER[j]);
+  });
+  window.addEventListener('popstate', () => go(fromHash()));
+
+  $('#skip').addEventListener('click', e => {
+    e.preventDefault();
+    const h = panes[active].el.querySelector('h2');
+    h && h.focus({ preventScroll: true });
+  });
+
+  /* ──────────────────── Press feedback ────────────────────
+     Feedback on pointer-down, released with a spring. */
+  function pressable(el, { scale = 0.97, target = el, atPoint = false } = {}) {
+    const s = new Spring(1, {
+      dampingRatio: 1, response: 0.3, precision: 0.0004,
+      onUpdate: v => { target.style.transform = Math.abs(v - 1) < 0.0005 ? '' : `scale(${v.toFixed(4)})`; },
+    });
+    el.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      if (atPoint) {
+        const r = target.getBoundingClientRect();
+        target.style.transformOrigin = `${(e.clientX - r.left).toFixed(1)}px ${(e.clientY - r.top).toFixed(1)}px`;
+      }
+      s.to(scale, { dampingRatio: 1, response: 0.16 });
+    });
+    const up = () => { if (s.target !== 1) s.to(1, { dampingRatio: 1, response: 0.32 }); };
+    for (const t of ['pointerup', 'pointercancel', 'pointerleave']) el.addEventListener(t, up);
+    return s;
+  }
+  navLinks.forEach(a => pressable(a, { scale: 0.96, target: a.firstElementChild }));
+  $$('.row, .primary-link, .side-res').forEach(el => pressable(el, { scale: 0.98 }));
+
+  /* ────────────────────── Materialize ──────────────────────
+     Blur radius, scale and opacity arrive together on one spring,
+     so the surface reads as a material forming, not a fade. */
+  function materialize(el, { delay = 0, blur = 0, sat = 100, content = null, onDone } = {}) {
+    const rm = reduced();
+    const glass = blur > 0 && !solid();
+    const apply = m => {
+      el.style.opacity = (rm ? clamp(m, 0, 1) : clamp(m / 0.55, 0, 1)).toFixed(3);
+      if (rm) return;
+      el.style.transform = `scale(${(0.96 + 0.04 * m).toFixed(4)})`;
+      if (glass) {
+        const f = `blur(${(blur * m).toFixed(1)}px) saturate(${Math.round(100 + (sat - 100) * m)}%)`;
+        el.style.backdropFilter = f;
+        el.style.webkitBackdropFilter = f;
+      }
+      if (content) content.style.filter = m > 0.995 ? '' : `blur(${(6 * (1 - m)).toFixed(2)}px)`;
+    };
+    const s = new Spring(0, {
+      dampingRatio: 1, response: rm ? 0.3 : 0.55, precision: 0.001,
+      onUpdate: apply,
+      onRest: () => {
+        el.style.transform = '';
+        el.style.backdropFilter = '';
+        el.style.webkitBackdropFilter = '';
+        el.style.opacity = '';
+        if (content) content.style.filter = '';
+        el.classList.add('is-in');
+        onDone && onDone();
+      },
+    });
+    apply(0);
+    setTimeout(() => requestAnimationFrame(() => s.to(1)), delay);
+    return s;
+  }
+
+  /* ─────────────────── Specular edge light ───────────────────
+     X follows the pointer along each window's top edge; Y is the
+     pointer's distance from that edge and sets intensity. Two
+     independent springs, so a diagonal sweep never desyncs. */
+  const specs = $$('.win > .spec').map(spec => ({ win: spec.parentElement, blob: spec.firstElementChild, rect: null, bw: 0 }));
+  for (const s of specs) {
+    s.s = new Spring2D(0, 420, {
+      dampingRatio: 1, response: 0.4, precision: 0.5,
+      onUpdate: (x, d) => {
+        s.blob.style.transform = `translate3d(${(x - s.bw / 2).toFixed(1)}px,0,0)`;
+        s.blob.style.opacity = (0.16 + 0.84 * Math.exp(-Math.max(0, d) / 240)).toFixed(3);
+      },
+    });
+  }
+  const tracking = () => MQ.fine.matches && !reduced() && !mobile();
+  function measureSpecs() { for (const s of specs) { s.rect = s.win.getBoundingClientRect(); s.bw = s.blob.offsetWidth; } }
+  function parkSpecs(instant) {
+    for (const s of specs) {
+      if (!s.rect) continue;
+      const x = s.rect.width * 0.3, d = 420;
+      instant ? s.s.set(x, d) : s.s.to(x, d, { dampingRatio: 1, response: 0.6 });
+    }
+  }
+  document.addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !tracking()) return;
+    for (const s of specs) {
+      const r = s.rect;
+      if (!r) continue;
+      const x = clamp(e.clientX - r.left, 0, r.width);
+      s.s.to(x, Math.hypot(e.clientX - (r.left + x), e.clientY - r.top), { dampingRatio: 1, response: 0.4 });
+    }
+  }, { passive: true });
+  document.addEventListener('mouseout', e => { if (!e.relatedTarget && tracking()) parkSpecs(false); });
+
+  /* ──────────────────── Skill modules ────────────────────
+     A module grows into its panel: the panel's surface starts on the
+     module's exact rect and morphs to its own (one progress spring p),
+     content counter-scaled so text never stretches. Collapse runs the
+     same path backwards into the module. A drag offset (d) lets the
+     panel be pulled down and flicked away. */
+  const layer = $('#xp-layer');
+  const scrim = $('.xp-scrim', layer);
+  let drag = null;
+
+  const xps = $$('.module').map(btn => {
+    const panel = document.getElementById(btn.getAttribute('aria-controls'));
+    const st = { btn, panel, bg: $('.xp-bg', panel), body: $('.xp-body', panel), scroll: $('.xp-scroll', panel), close: $('.xp-close', panel), geo: null, open: false };
+    st.p = new Spring(0, { dampingRatio: 1, response: 0.4, precision: 0.001, onUpdate: () => renderXp(st), onRest: () => restXp(st) });
+    st.d = new Spring(0, { dampingRatio: 1, response: 0.38, precision: 0.2, onUpdate: () => renderXp(st), onRest: () => restXp(st) });
+    pressable(btn, { scale: 1.035, atPoint: true });   // grows up and out toward the finger
+    btn.addEventListener('click', () => openXp(st));
+    st.close.addEventListener('click', () => closeXp(st));
+    st.scroll.addEventListener('scroll', () => scrollEdge(st), { passive: true });
+    bindDrag(st);
+    return st;
+  });
+
+  // Only a list that actually overflows becomes a scroll view (and a tab stop).
+  function syncScroll(st) {
+    const sc = st.scroll;
+    const can = sc.scrollHeight > sc.clientHeight + 1;
+    sc.classList.toggle('is-scrollable', can);
+    if (can) sc.tabIndex = 0; else sc.removeAttribute('tabindex');
+    scrollEdge(st);
+  }
+  function scrollEdge(st) { st.scroll.classList.toggle('at-top', st.scroll.scrollTop <= 0); }
+
+  function measureSource(st) {
+    const g = st.geo;
+    const M = st.btn.getBoundingClientRect();
+    g.tx = M.left - g.left; g.ty = M.top - g.top;
+    g.sx = M.width / g.w;   g.sy = M.height / g.h;
+  }
+  function layoutXp(st, { reset = false } = {}) {
+    const { panel, bg, body } = st;
+    panel.hidden = false;
+    bg.style.transform = ''; body.style.transform = '';
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    const host = mobile() ? { left: 0, top: 0, width: vw, height: vh } : main.getBoundingClientRect();
+    const gutter = mobile() ? 16 : 40;
+    const w = Math.round(Math.min(34 * remPx(), host.width - 2 * gutter));
+    panel.style.width = w + 'px';
+    // Never taller than the screen: past that, the list scrolls inside it.
+    panel.style.setProperty('--xp-max', Math.max(160, vh - 32) + 'px');
+    if (reset) st.scroll.scrollTop = 0;
+    syncScroll(st);
+    const h = panel.offsetHeight;
+    const left = Math.round(host.left + (host.width - w) / 2);
+    const top = Math.round(clamp(host.top + (host.height - h) / 2, 16, Math.max(16, vh - h - 16)));
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+    st.geo = { left, top, w, h };
+    measureSource(st);
+  }
+  function renderScrim() {
+    let o = 0;
+    for (const s of xps) if (s.geo) o = Math.max(o, clamp(s.p.value, 0, 1) * (1 - 0.65 * clamp(s.d.value / s.geo.h, 0, 1)));
+    scrim.style.opacity = o.toFixed(3);
+  }
+  function renderXp(st) {
+    const g = st.geo;
+    if (!g) return;
+    const p = st.p.value, d = st.d.value;
+    if (reduced()) {
+      // Cross-fade in place; no scaling.
+      st.bg.style.transform = Math.abs(d) > 0.05 ? `translate3d(0,${d.toFixed(2)}px,0)` : '';
+      st.body.style.transform = '';
+      st.panel.style.opacity = clamp(p, 0, 1).toFixed(3);
+    } else {
+      const k = 1 - p;
+      const sx = g.sx + (1 - g.sx) * p, sy = g.sy + (1 - g.sy) * p;
+      st.bg.style.transform = `translate3d(${(g.tx * k).toFixed(2)}px,${(g.ty * k + d).toFixed(2)}px,0) scale(${sx.toFixed(4)},${sy.toFixed(4)})`;
+      st.body.style.transform = `scale(1,${(sx / sy).toFixed(4)})`;
+      st.bg.style.opacity = clamp(p / 0.12, 0, 1).toFixed(3);
+      st.body.style.opacity = clamp((p - 0.1) / 0.4, 0, 1).toFixed(3);
+      st.btn.style.opacity = (1 - clamp(p / 0.18, 0, 1)).toFixed(3);
+    }
+    renderScrim();
+  }
+  function restXp(st) {
+    if (st.open || st.p.animating || st.d.animating || st.p.value > 0.001) return;
+    st.panel.hidden = true;
+    st.panel.style.opacity = '';
+    st.bg.style.transform = st.bg.style.opacity = '';
+    st.body.style.transform = st.body.style.opacity = '';
+    st.btn.style.opacity = '';
+    st.geo = null;
+    renderScrim();
+  }
+  function openXp(st, { focus = true } = {}) {
+    for (const o of xps) if (o !== st && o.open) closeXp(o, { restoreFocus: false });
+    if (!st.geo || (st.p.value <= 0.001 && !st.p.animating)) layoutXp(st, { reset: true });
+    st.open = true;
+    st.btn.setAttribute('aria-expanded', 'true');
+    layer.classList.add('is-open');
+    stage.inert = true;
+    st.p.to(1, { dampingRatio: 1, response: reduced() ? 0.22 : 0.4 });
+    if (!drag) st.d.to(0, { dampingRatio: 1, response: 0.38 });
+    if (focus) st.close.focus({ preventScroll: true });
+  }
+  function closeXp(st, { restoreFocus = true, velocity = 0 } = {}) {
+    if (!st.open) return;
+    st.open = false;
+    st.btn.setAttribute('aria-expanded', 'false');
+    if (!xps.some(o => o.open)) { layer.classList.remove('is-open'); stage.inert = false; }
+    // Fully open = identity transform, so re-reading the source can't jump.
+    if (st.p.value > 0.999 && !st.p.animating) measureSource(st);
+    st.p.to(0, { dampingRatio: 1, response: reduced() ? 0.18 : 0.38 });
+    st.d.to(0, { dampingRatio: 1, response: 0.38, velocity });   // carries a flick's velocity
+    if (restoreFocus) st.btn.focus({ preventScroll: true });
+  }
+
+  function bindDrag(st) {
+    const el = st.bg;
+    el.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || drag) return;
+      // Inside a scrolled list, the gesture belongs to the list (iOS sheet rule):
+      // the sheet only follows a pull that starts with the list at its top.
+      const inList = !!e.target.closest('.xp-scroll.is-scrollable');
+      if (inList && st.scroll.scrollTop > 0) return;
+      if (!st.open && st.p.value > 0.001) openXp(st, { focus: false });  // caught while closing
+      if (st.d.animating) st.d.set(st.d.value);                          // catch it where it is
+      drag = { id: e.pointerId, y0: e.clientY, d0: st.d.value, live: false, inList, vt: new VelocityTracker() };
+      drag.vt.add(e.clientY);
+    });
+    el.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (!drag.live) {
+        if (Math.abs(e.clientY - drag.y0) < 8) return;                   // hysteresis
+        if (drag.inList && e.clientY < drag.y0) { drag = null; return; } // a push up scrolls the list
+        drag.live = true; drag.y0 = e.clientY; drag.d0 = st.d.value;
+        try { el.setPointerCapture(e.pointerId); } catch (_) {}
+        el.classList.add('is-dragging');
+      }
+      drag.vt.add(e.clientY);
+      const raw = drag.d0 + (e.clientY - drag.y0);
+      st.d.set(raw < 0 ? F.rubberband(raw, st.geo.h) : raw);           // resist upward
+    });
+    const end = (e, cancelled) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const g = drag; drag = null;
+      el.classList.remove('is-dragging');
+      if (!g.live) return;
+      const v = cancelled ? 0 : g.vt.velocity();
+      const d = st.d.value;
+      if (!cancelled && d > 0 && d + F.project(v) > Math.max(st.geo.h * 0.5, 120)) {
+        closeXp(st, { velocity: v });
+      } else {
+        const momentum = Math.abs(v) > 300;
+        st.d.to(0, { dampingRatio: momentum ? 0.8 : 1, response: 0.35, velocity: d < 0 ? v * 0.35 : v });
+      }
+    };
+    el.addEventListener('pointerup', e => end(e, false));
+    el.addEventListener('pointercancel', e => end(e, true));
+    // Touch starts with implicit capture on the touched child; taking it
+    // over fires lostpointercapture on that child, which bubbles here.
+    el.addEventListener('lostpointercapture', e => { if (e.target === el) end(e, true); });
+  }
+
+  document.addEventListener('keydown', e => {
+    const open = xps.find(x => x.open);
+    if (!open) return;
+    if (e.key === 'Escape') { e.preventDefault(); closeXp(open); }
+    else if (e.key === 'Tab') {
+      // Focus stays inside: the close button, plus the list when it scrolls.
+      e.preventDefault();
+      const stops = [open.close];
+      if (open.scroll.classList.contains('is-scrollable')) stops.push(open.scroll);
+      const i = stops.indexOf(document.activeElement);
+      const j = i < 0 ? 0 : (i + (e.shiftKey ? stops.length - 1 : 1)) % stops.length;
+      stops[j].focus({ preventScroll: true });
+    }
+  });
+  scrim.addEventListener('click', () => { const open = xps.find(x => x.open); open && closeXp(open); });
+  // The page behind a modal never scrolls; a list that overflows inside it does.
+  const inScrollableList = e => !!(e.target.closest && e.target.closest('.xp-scroll.is-scrollable'));
+  const blockScroll = e => { if (xps.some(x => x.open) && !inScrollableList(e)) e.preventDefault(); };
+  layer.addEventListener('wheel', blockScroll, { passive: false });
+  layer.addEventListener('touchmove', e => { if (drag && drag.live) e.preventDefault(); else blockScroll(e); }, { passive: false });
+
+  /* ───────────────────────── Layout ───────────────────────── */
+  // Phones: panes are at least one screen minus header and footer, so a
+  // long pane leaving has room to move, yet a short pane still ends with
+  // the footer resting just above the tab bar instead of below the fold.
+  const mainFoot = $('.main-foot');
+  function sizePanes() {
+    panesEl.style.minHeight = mobile()
+      ? `calc(100svh - ${side.offsetHeight + mainFoot.offsetHeight}px)`
+      : '';
+  }
+  function syncLayout() {
+    if (mobile()) scroller.removeAttribute('tabindex');
+    else scroller.tabIndex = 0;
+    sizePanes();
+  }
+  let wasMobile = mobile();
+  let resizeRaf = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      if (mobile() !== wasMobile) {
+        wasMobile = mobile();
+        syncLayout();
+        for (const p of panes) {
+          p.base = 0;
+          p.y.set(p.i === active ? 0 : Math.sign(p.i - active) * offset());
+          p.o.set(p.i === active ? 1 : 0);
+        }
+      }
+      updateNav(true);
+      sizePanes();
+      measureSpecs();
+      for (const s of xps) if (s.open && s.p.value > 0.999) { layoutXp(s); renderXp(s); }
+    });
+  });
+  F.onReducedMotionChange(() => { updateNav(true); parkSpecs(true); });
+
+  /* ────────────────────────── Init ────────────────────────── */
+  syncLayout();
+  go(fromHash(), { instant: true });
+
+  if (mobile()) {
+    side.classList.add('is-in'); main.classList.add('is-in');
+    materialize(sideNav, { blur: 30, sat: 170, content: $('.nav-track', sideNav) });
+  } else {
+    sideNav.classList.add('is-in');
+    const done = () => { measureSpecs(); parkSpecs(true); };
+    materialize(side, { blur: 56, sat: 140, content: $('.win-inner', side) });
+    materialize(main, { delay: 70, blur: 18, sat: 160, content: scroller, onDone: done });
+    measureSpecs(); parkSpecs(true);
+  }
+
+  // Read-only hooks for the headless checks.
+  window.__glass = {
+    get active() { return ORDER[active]; },
+    panes: () => panes.map(p => ({ name: p.name, ty: p.base + p.y.value, o: p.o.value, top: p.el.getBoundingClientRect().top, vis: p.el.style.visibility })),
+    sel: () => ({ x: selS.x.value, y: selS.y.value }),
+    xp: () => xps.map(s => ({ id: s.panel.id, open: s.open, p: s.p.value, d: s.d.value, geo: s.geo && { ...s.geo } })),
+  };
+
+  /* ─────────────────── Die artwork (static) ───────────────────
+     A floorplan drawn once: pad ring, hard macros with halos, a
+     die-to-die PHY in its own voltage area with a row of level
+     shifters, standard-cell rows, power straps, an H-tree clock and a
+     few routed nets. Seeded, so it's identical on every load.
+     Two scales on purpose: filled macros and placement-density clusters
+     are big and soft enough to survive the glass blur (that is what the
+     windows refract); the thin lines are detail for the bare canvas. */
+  function buildDie(svg) {
+    if (!svg) return;
+    let seed = 0x2f6b9e1;
+    const rnd = () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    const W = 1600, H = 1000;
+    const ink = o => `rgba(232,221,201,${o})`;
+    const out = [];
+    const path = (d, attrs) => out.push(`<path d="${d}" ${attrs}/>`);
+    const box = (x, y, w, h) => `M${x} ${y}h${w}v${h}h${-w}z `;
+
+    out.push(`<rect x="34" y="34" width="${W - 68}" height="${H - 68}" rx="3" fill="none" stroke="${ink(0.09)}"/>`);
+    out.push(`<rect x="44" y="44" width="${W - 88}" height="${H - 88}" fill="none" stroke="${ink(0.05)}"/>`);
+
+    let pads = '';
+    for (let x = 92; x <= W - 106; x += 32) pads += `M${x} 54h14v22h-14z M${x} ${H - 76}h14v22h-14z `;
+    for (let y = 96; y <= H - 110; y += 32) pads += `M54 ${y}h22v14h-22z M${W - 76} ${y}h22v14h-22z `;
+    path(pads, `fill="${ink(0.04)}" stroke="${ink(0.07)}" stroke-width=".6"`);
+
+    const core = { x: 104, y: 104, w: W - 208, h: H - 208 };
+    out.push(`<rect x="${core.x}" y="${core.y}" width="${core.w}" height="${core.h}" fill="none" stroke="${ink(0.045)}" stroke-dasharray="2 4"/>`);
+
+    const macros = [
+      [124, 124, 228, 150], [124, 290, 228, 150], [124, 456, 228, 150], [124, 622, 228, 254],
+      [1222, 124, 254, 196], [1222, 336, 254, 196],
+      [1222, 560, 118, 316], [1358, 560, 118, 316],
+      [612, 742, 300, 134], [930, 742, 196, 134],
+    ];
+    // Die-to-die PHY along the top edge, fenced in its own (fixed) voltage area.
+    const phy = [436, 124, 712, 50];
+    const va = [phy[0] - 16, phy[1] - 12, phy[2] + 32, phy[3] + 40];
+    const cx0 = 787, cy0 = 420;
+    const halo = 10;
+    let mFill = '', mHalo = '', mInner = '', mPins = '';
+    const pinsOn = [];
+    for (const [x, y, w, h] of macros) {
+      mFill += box(x, y, w, h);
+      mHalo += box(x - halo, y - halo, w + 2 * halo, h + 2 * halo);
+      for (let yy = y + 14; yy < y + h - 8; yy += 7) mInner += `M${x + 12} ${yy}h${w - 24} `;
+      const dx = cx0 - (x + w / 2), dy = cy0 - (y + h / 2);
+      if (Math.abs(dx) * (h / w) > Math.abs(dy)) {
+        const ex = dx > 0 ? x + w : x;
+        for (let yy = y + 8; yy < y + h - 6; yy += 5) mPins += `M${ex - (dx > 0 ? 6 : -6)} ${yy}H${ex} `;
+        pinsOn.push({ side: dx > 0 ? 'r' : 'l', x: ex, y0: y + 10, y1: y + h - 10 });
+      } else {
+        const ey = dy > 0 ? y + h : y;
+        for (let xx = x + 8; xx < x + w - 6; xx += 5) mPins += `M${xx} ${ey - (dy > 0 ? 6 : -6)}V${ey} `;
+        pinsOn.push({ side: dy > 0 ? 'b' : 't', y: ey, x0: x + 10, x1: x + w - 10 });
+      }
+    }
+
+    // PHY lanes: eight slices with narrow gaps, a level shifter under each
+    // signal crossing into the core's dynamic-voltage domain.
+    let lanes = '', lsh = '';
+    const laneW = (phy[2] - 7 * 8) / 8;
+    for (let i = 0; i < 8; i++) {
+      const lx = phy[0] + i * (laneW + 8);
+      lanes += box(+lx.toFixed(1), phy[1], +laneW.toFixed(1), phy[3]);
+    }
+    for (let x = va[0] + 10; x < va[0] + va[2] - 10; x += 14) lsh += box(x, va[1] + va[3] - 9, 6, 6);
+    pinsOn.push({ side: 'b', y: va[1] + va[3], x0: phy[0] + 20, x1: phy[0] + phy[2] - 20 });
+
+    // Standard-cell rows in whatever the macros leave free. Placement is
+    // denser around a few hot regions — the soft clouds behind the glass.
+    const blocked = macros.map(([x, y, w, h]) => [x - halo - 4, y - halo - 4, x + w + halo + 4, y + h + halo + 4]);
+    blocked.push([va[0] - 4, va[1] - 4, va[0] + va[2] + 4, va[1] + va[3] + 4]);
+    const hot = [[610, 340, 125, 1], [990, 555, 140, 1], [1075, 300, 80, 0.75], [500, 600, 85, 0.7]];
+    const density = (x, y) => Math.min(1, hot.reduce((s, [hx, hy, r, k]) => s + k * Math.exp(-((x - hx) ** 2 + (y - hy) ** 2) / (2 * r * r)), 0));
+    const rowH = 10;
+    let rails = '', ticks = '', cells = '';
+    for (let y = core.y + 6; y + rowH <= core.y + core.h - 6; y += rowH) {
+      let segs = [[core.x + 6, core.x + core.w - 6]];
+      for (const [bx0, by0, bx1, by1] of blocked) {
+        if (y + rowH <= by0 || y >= by1) continue;
+        segs = segs.flatMap(([a, b]) => (bx1 <= a || bx0 >= b)
+          ? [[a, b]]
+          : [[a, Math.min(b, bx0)], [Math.max(a, bx1), b]].filter(([u, v]) => v - u > 8));
+      }
+      for (const [a, b] of segs) {
+        rails += `M${a} ${y}H${b} `;
+        let x = a;
+        while (x < b - 3) {
+          const w = 3 + Math.floor(rnd() * 5) * 3 + (rnd() < 0.1 ? 12 : 0);
+          const x2 = Math.min(b, x + w);
+          ticks += `M${x2} ${y}v${rowH} `;
+          if (rnd() < 0.04 + 0.9 * density(x, y)) cells += `M${(x + 0.8).toFixed(1)} ${y + 1.4}h${(x2 - x - 1.6).toFixed(1)}v${rowH - 2.8}h${-(x2 - x - 1.6).toFixed(1)}z `;
+          x = x2;
+        }
+      }
+    }
+    path(cells, `fill="${ink(0.2)}"`);
+    path(rails, `fill="none" stroke="${ink(0.055)}" stroke-width=".6"`);
+    path(ticks, `fill="none" stroke="${ink(0.05)}" stroke-width=".6"`);
+
+    path(mHalo, `fill="none" stroke="${ink(0.06)}" stroke-dasharray="3 3"`);
+    path(mFill, `fill="${ink(0.16)}" stroke="${ink(0.2)}" stroke-width=".8"`);
+    path(mInner, `fill="none" stroke="rgba(6,6,7,0.22)" stroke-width=".7"`);
+    path(mPins, `fill="none" stroke="${ink(0.16)}" stroke-width=".6"`);
+
+    out.push(`<rect x="${va[0]}" y="${va[1]}" width="${va[2]}" height="${va[3]}" fill="${ink(0.025)}" stroke="${ink(0.1)}" stroke-dasharray="6 4"/>`);
+    path(lanes, `fill="${ink(0.17)}" stroke="${ink(0.2)}" stroke-width=".8"`);
+    path(lsh, `fill="${ink(0.16)}"`);
+
+    // Power straps over the core.
+    let straps = '';
+    for (let x = core.x + 40; x < core.x + core.w; x += 88) straps += `M${x} ${core.y}V${core.y + core.h} M${x + 5} ${core.y}V${core.y + core.h} `;
+    path(straps, `fill="none" stroke="${ink(0.055)}" stroke-width="1.6"`);
+    let hstraps = '';
+    for (let y = core.y + 60; y < core.y + core.h; y += 150) hstraps += `M${core.x} ${y}H${core.x + core.w} M${core.x} ${y + 5}H${core.x + core.w} `;
+    path(hstraps, `fill="none" stroke="${ink(0.04)}" stroke-width="1.6"`);
+
+    // H-tree clock distribution.
+    let clk = '', leaves = '';
+    const htree = (x, y, len, depth) => {
+      const v = len * 0.62;
+      clk += `M${x - len} ${y}H${x + len} M${x - len} ${y - v}V${y + v} M${x + len} ${y - v}V${y + v} `;
+      const ends = [[x - len, y - v], [x - len, y + v], [x + len, y - v], [x + len, y + v]];
+      if (depth > 1) for (const [ex, ey] of ends) htree(ex, ey, len / 2, depth - 1);
+      else for (const [ex, ey] of ends) leaves += `M${ex - 2} ${ey - 2}h4v4h-4z `;
+    };
+    htree(cx0, cy0, 200, 4);
+    path(clk, `fill="none" stroke="${ink(0.12)}" stroke-width="1.1"`);
+    path(leaves, `fill="${ink(0.14)}"`);
+
+    // A few routed nets from macro and PHY pins into the core.
+    let nets = '', vias = '';
+    const via = (x, y) => { vias += `M${(x - 1.6).toFixed(1)} ${(y - 1.6).toFixed(1)}h3.2v3.2h-3.2z `; };
+    for (let n = 0; n < 16; n++) {
+      const pin = pinsOn[Math.floor(rnd() * pinsOn.length)];
+      const tx = Math.round(420 + rnd() * 740), ty = Math.round(230 + rnd() * 470);
+      if (pin.side === 'l' || pin.side === 'r') {
+        const y = Math.round(pin.y0 + rnd() * (pin.y1 - pin.y0));
+        const jx = Math.round(pin.x + (tx - pin.x) * (0.3 + rnd() * 0.4));
+        nets += `M${pin.x} ${y}H${jx}V${ty}H${tx} `;
+        via(jx, y); via(jx, ty);
+      } else {
+        const x = Math.round(pin.x0 + rnd() * (pin.x1 - pin.x0));
+        const jy = Math.round(pin.y + (ty - pin.y) * (0.3 + rnd() * 0.4));
+        nets += `M${x} ${pin.y}V${jy}H${tx}V${ty} `;
+        via(x, jy); via(tx, jy);
+      }
+      via(tx, ty);
+    }
+    path(nets, `fill="none" stroke="${ink(0.15)}" stroke-width="1"`);
+    path(vias, `fill="${ink(0.18)}"`);
+
+    svg.innerHTML = out.join('');
+  }
+})();
+</script>
+</body>
+</html>

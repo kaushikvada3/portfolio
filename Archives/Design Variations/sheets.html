@@ -1,0 +1,1687 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kaushik Vada — Sheets</title>
+<meta name="description" content="Kaushik Vada, Physical Design Intern at Tenstorrent and Electrical Engineering student at UC Riverside. Experience, projects, skills and contact as cards that expand in place and a sheet you can drag.">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23000'/%3E%3Crect x='8.5' y='8.5' width='15' height='15' rx='3' fill='none' stroke='%23E0B96C' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' rx='1' fill='%23E0B96C'/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add('js')</script>
+<style>
+  :root {
+    color-scheme: dark;
+
+    --bg: #000;
+    --surface: #161618;
+    --fill: rgba(255, 255, 255, 0.09);
+    --fill-strong: rgba(255, 255, 255, 0.15);
+    --hairline: rgba(255, 255, 255, 0.09);
+    --ink-1: rgba(255, 255, 255, 0.96);
+    --ink-2: rgba(255, 255, 255, 0.76);
+    --ink-3: rgba(255, 255, 255, 0.52);
+    --gold: rgb(224, 185, 108);
+    --focus: rgba(224, 185, 108, 0.95);
+    --material: rgba(30, 30, 32, 0.74);
+    --material-bar: rgba(0, 0, 0, 0.62);
+    --edge-light: rgba(255, 255, 255, 0.14);
+
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+    --s1: 0.25rem;
+    --s2: 0.5rem;
+    --s3: 0.75rem;
+    --s4: 1rem;
+    --s5: 1.5rem;
+    --s6: 2rem;
+    --s7: 3rem;
+    --s8: 4rem;
+
+    --gutter: 1.25rem;
+    --col: 46rem;
+    --wrap: calc(var(--col) + 2 * var(--gutter));
+    --nav-h: 3.25rem;
+    --r-card: 1.75rem;
+    --r-sheet: 1.5rem;
+    --face-fs: 1rem;
+    --peek-h: 4.5rem;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; }
+  html {
+    background: var(--bg);
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  html.is-locked { overflow: hidden; }
+  html.is-dragging, html.is-dragging * {
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: grabbing !important;
+  }
+  body {
+    min-height: 100vh;
+    overflow-x: clip;
+    background: var(--bg);
+    color: var(--ink-1);
+    font-family: var(--font);
+    font-size: 1rem;
+    line-height: 1.5;
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  svg { display: block; flex: none; }
+  ul { list-style: none; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .contact-line a:focus-visible, .foot a:focus-visible { border-radius: 0.25rem; }
+  .nowrap { white-space: nowrap; }
+  .vh {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* ── Navigation bar: transparent at the scroll edge, material once content slides under ── */
+  .navbar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 10;
+    padding-top: env(safe-area-inset-top);
+  }
+  .navbar-material {
+    position: absolute;
+    inset: 0 0 -1.25rem 0;
+    background: var(--material-bar);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent);
+    mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .navbar-inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: var(--nav-h);
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 calc(var(--gutter) - 0.5rem);
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-height: 2.75rem;
+    padding: 0 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 1.0625rem;
+    letter-spacing: -0.01em;
+    color: var(--ink-2);
+    transition: color 0.2s, opacity 0.1s;
+  }
+  .nav-link:hover { color: var(--ink-1); }
+  .nav-link:active { opacity: 0.55; }
+  .nav-back { justify-self: start; }
+  .nav-back svg { width: 0.625rem; height: 1.0625rem; }
+  .nav-action { justify-self: end; }
+  .nav-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    white-space: nowrap;
+    opacity: 0;
+  }
+
+  /* ── Large title ── */
+  .masthead {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: calc(env(safe-area-inset-top) + var(--nav-h) + var(--s1)) var(--gutter) var(--s5);
+  }
+  .large-title {
+    font-size: 2.125rem;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+  }
+  .subtitle {
+    max-width: 32em;
+    margin-top: var(--s2);
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    letter-spacing: -0.008em;
+    color: var(--ink-2);
+  }
+
+  /* ── Feed ── */
+  .feed {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+  .feed-list { display: grid; gap: var(--s5); }
+  .slot { position: relative; }
+  .card {
+    position: relative;
+    border-radius: var(--r-card);
+    background: var(--surface);
+    transform-origin: 50% 50%;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card.is-source { opacity: 0; }
+  .card.is-pressed { opacity: 0.8; }
+  .card:has(.card-hit:focus-visible) { outline: 2px solid var(--focus); outline-offset: 4px; }
+  .card-hit { all: unset; cursor: pointer; }
+  .card-hit::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: var(--r-card);
+  }
+  .card-hit:focus-visible { outline: none; }
+
+  /* The card face is sized entirely in em, so the expanded detail can
+     re-render it at a larger font-size and get identical line breaks. */
+  .face {
+    display: flex;
+    flex-direction: column;
+    min-height: 19.5em;
+    padding: 1.5em;
+    font-size: var(--face-fs);
+  }
+  .face-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+    font-family: var(--mono);
+    font-size: 0.6875em;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    /* room for the close button once this face becomes the detail's header */
+    padding-right: 1.5em;
+  }
+  .now-dot {
+    flex: none;
+    width: 0.7em;
+    height: 0.7em;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+  .face-title {
+    margin-top: 0.5em;
+    font-size: 2.5em;
+    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: -0.026em;
+    color: var(--ink-1);
+  }
+  .face-role {
+    margin-top: 0.3em;
+    font-size: 1.0625em;
+    line-height: 1.35;
+    letter-spacing: -0.006em;
+    color: var(--ink-2);
+  }
+  .face-foot {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1em;
+    margin-top: auto;
+    padding-top: 2.5em;
+  }
+  .face-stat { min-width: 0; }
+  /* Qualifies the number it sits on (a target, not a result), so it reads first. */
+  .stat-kicker {
+    display: block;
+    margin-bottom: 0.625em;
+    font-family: var(--mono);
+    font-size: 0.6875em;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+  }
+  .stat-num {
+    display: block;
+    font-size: 2.25em;
+    line-height: 1;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: var(--ink-1);
+  }
+  .stat-cap {
+    display: block;
+    max-width: 30em;
+    margin-top: 0.5em;
+    text-wrap: pretty;
+    font-size: 0.875em;
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+  .face-more {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 2em;
+    height: 2em;
+    border-radius: 50%;
+    background: var(--fill);
+    color: var(--ink-2);
+    transition: background-color 0.2s, color 0.2s;
+  }
+  .face-more svg { width: 0.8125em; height: 0.8125em; }
+  @media (hover: hover) {
+    .card:hover .face-more { background: var(--fill-strong); color: var(--ink-1); }
+  }
+
+  /* ── Expanded detail ── */
+  .detail { position: fixed; inset: 0; z-index: 50; }
+  .detail[hidden] { display: none; }
+  .detail-scrim { position: absolute; inset: 0; background: #000; opacity: 0; }
+  .detail-surface {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    background: var(--surface);
+    touch-action: pan-y;
+  }
+  .detail-scroll {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .detail-scroll:focus-visible { outline-offset: -2px; border-radius: var(--detail-r, 0); }
+  /* Scroll-edge material: appears only once content has slid under the close button. */
+  .detail-edge {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 1;
+    height: calc(var(--hero-pad, 1.5rem) + 3.25rem);
+    background: color-mix(in srgb, var(--surface) 84%, transparent);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-mask-image: linear-gradient(#000 45%, transparent);
+    mask-image: linear-gradient(#000 45%, transparent);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .detail-body { padding: 0 var(--hero-pad, 1.5rem) calc(var(--s8) + env(safe-area-inset-bottom)); }
+  .detail-body > * { max-width: 38rem; }
+  /* Close lives inside the scroller, pinned by a zero-height sticky dock, so the
+     arrow, Page and End keys scroll the content while it has focus. */
+  .close-dock { position: sticky; top: 0; z-index: 2; height: 0; }
+  .detail-close {
+    position: absolute;
+    top: calc(var(--hero-pad, 1.5rem) - 0.875rem);
+    right: calc(var(--hero-pad, 1.5rem) - 1.25rem);
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+  }
+  .detail-close:focus-visible { outline-offset: -2px; border-radius: 50%; }
+  .close-disc {
+    display: grid;
+    place-items: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 50%;
+    background: rgba(70, 70, 74, 0.62);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    backdrop-filter: blur(12px) saturate(160%);
+    color: var(--ink-1);
+    transition: transform 0.1s ease-out, background-color 0.2s;
+  }
+  .detail-close:hover .close-disc { background: rgba(90, 90, 94, 0.7); }
+  .detail-close:active .close-disc { transform: scale(0.88); }
+  .close-disc svg { width: 0.6875rem; height: 0.6875rem; }
+
+  .d-label {
+    margin: var(--s2) 0 var(--s4);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .d-lede {
+    margin: var(--s1) 0 var(--s5);
+    font-size: 1.0625rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .points { display: grid; gap: 1.125rem; }
+  .points li {
+    position: relative;
+    padding-left: 1.125rem;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    letter-spacing: -0.006em;
+    color: var(--ink-2);
+    text-wrap: pretty;
+  }
+  .points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.68em;
+    width: 0.3125rem;
+    height: 0.3125rem;
+    border-radius: 50%;
+    background: var(--ink-3);
+  }
+  .points b { font-weight: 600; color: var(--ink-1); }
+
+  .course { columns: 2 14rem; column-gap: var(--s5); }
+  .course li {
+    break-inside: avoid;
+    padding: 0.3125rem 0;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+
+  /* ── Bottom sheet ── */
+  .sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    touch-action: none;
+  }
+  .sheet-scrim.is-active { pointer-events: auto; }
+  .sheet {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    width: min(100%, var(--col));
+    margin: 0 auto;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    background: var(--material);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+    box-shadow: inset 0 0.5px 0 var(--edge-light), 0 -0.5rem 2.5rem rgba(0, 0, 0, 0.35);
+    transform: translate3d(0, 110vh, 0);
+  }
+  .sheet-head { flex: none; touch-action: none; cursor: grab; }
+  .sheet a, .sheet svg, .detail-surface a { -webkit-user-drag: none; }
+  .grabber {
+    display: block;
+    width: 100%;
+    padding: 0.375rem var(--gutter) 1rem;
+    border-radius: var(--r-sheet) var(--r-sheet) 0 0;
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+    cursor: inherit;
+  }
+  .grabber:focus-visible { outline-offset: -3px; }
+  .grabber-pill {
+    display: block;
+    width: 2.25rem;
+    height: 0.3125rem;
+    margin: 0 auto 0.875rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.28);
+    transition: background-color 0.15s;
+  }
+  .grabber:hover .grabber-pill, .grabber:active .grabber-pill { background: rgba(255, 255, 255, 0.5); }
+  .sheet-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s4);
+  }
+  .sheet-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    color: var(--ink-1);
+  }
+  .sheet-chev {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--fill);
+    color: var(--ink-2);
+  }
+  .sheet-chev svg { width: 0.6875rem; height: 0.6875rem; }
+  .sheet-body {
+    flex: none;
+    overflow: hidden;
+    overscroll-behavior: contain;
+    touch-action: none;
+  }
+  .sheet.is-scrollable[data-detent="large"] .sheet-body { overflow-y: auto; touch-action: pan-y; }
+  .sheet-inner { padding: var(--s2) var(--gutter) calc(var(--s6) + env(safe-area-inset-bottom)); }
+
+  .actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); }
+  .action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    min-height: 4.25rem;
+    padding: 0.625rem 0.25rem;
+    border-radius: 0.875rem;
+    background: var(--fill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--ink-1);
+    transition: background-color 0.2s, transform 0.1s ease-out;
+  }
+  .action svg { width: 1.375rem; height: 1.375rem; }
+  .action:hover { background: var(--fill-strong); }
+  .action:active { transform: scale(0.96); }
+  .action.is-primary { background: var(--ink-1); color: #000; }
+  .action.is-primary:hover { background: #fff; }
+  .contact-line {
+    margin-top: var(--s3);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+  }
+  .contact-line a { color: var(--ink-2); transition: color 0.2s; }
+  .contact-line a:hover { color: var(--ink-1); }
+
+  .skills { display: grid; gap: var(--s5); margin-top: var(--s6); }
+  .skill h3 {
+    margin-bottom: var(--s2);
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .skill-line { font-size: 1rem; line-height: 1.5; color: var(--ink-1); }
+  .tools > div { display: grid; grid-template-columns: 5.25rem 1fr; gap: var(--s3); padding: 0.1875rem 0; }
+  .tools dt { font-weight: 600; color: var(--ink-1); }
+  .tools dd { color: var(--ink-2); }
+  .concepts { columns: 2 13rem; column-gap: var(--s5); }
+  .concepts li { break-inside: avoid; padding: 0.1875rem 0; color: var(--ink-2); }
+
+  /* ── Footer ── */
+  .foot {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: var(--s7) var(--gutter) calc(var(--peek-h) + var(--s6));
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+  }
+  .foot nav { display: flex; flex-wrap: wrap; gap: 0 var(--s5); }
+  .foot a { display: inline-flex; align-items: center; min-height: 2.75rem; color: var(--ink-2); transition: color 0.2s; }
+  .foot a:hover { color: var(--ink-1); }
+
+  @media (min-width: 48rem) {
+    .masthead { padding-top: calc(var(--nav-h) + var(--s7)); padding-bottom: var(--s6); }
+    .large-title { font-size: 3rem; line-height: 1.04; letter-spacing: -0.03em; }
+    .subtitle { margin-top: var(--s3); font-size: 1.25rem; letter-spacing: -0.012em; }
+    .feed { --face-fs: 1.0625rem; }
+    .face { min-height: 17.5em; }
+    .feed-list { gap: var(--s6); }
+  }
+
+  @media (max-width: 47.99rem) {
+    /* The subtitle breaks between its two clauses instead of orphaning the separator. */
+    .sub-sep { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .sub-b { display: block; }
+    /* Phones: a tighter rhythm so the whole sheet fits its large detent. */
+    .sheet-inner { padding-bottom: calc(var(--s5) + env(safe-area-inset-bottom)); }
+    .action { min-height: 4rem; }
+    .skills { gap: 1.25rem; margin-top: 1.75rem; }
+    .concepts li { padding: 0.125rem 0; }
+    .tools > div { grid-template-columns: 4.75rem 1fr; padding: 0.125rem 0; }
+  }
+
+  /* No JavaScript: everything inline, nothing hidden behind a gesture. */
+  html:not(.js) .card-detail[hidden] { display: block; padding: 0 1.5rem 1.5rem; }
+  html:not(.js) .face-more,
+  html:not(.js) .sheet-chev,
+  html:not(.js) .grabber-pill { display: none; }
+  html:not(.js) .sheet { position: relative; transform: none; margin: 0 auto var(--s6); border-radius: var(--r-card); }
+  html:not(.js) .sheet-head { cursor: default; }
+
+  @media (prefers-reduced-transparency: reduce) {
+    :root { --material: #1c1c1e; --material-bar: #0b0b0c; }
+    .navbar-material, .sheet, .close-disc, .detail-edge { -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .close-disc { background: #3a3a3c; }
+    .detail-edge { background: var(--surface); }
+  }
+  @media (prefers-contrast: more) {
+    :root {
+      --ink-2: rgba(255, 255, 255, 0.9);
+      --ink-3: rgba(255, 255, 255, 0.74);
+      --hairline: rgba(255, 255, 255, 0.42);
+      --fill: rgba(255, 255, 255, 0.18);
+      --surface: #1c1c1e;
+      --material: #1c1c1e;
+      --material-bar: #000;
+      --edge-light: rgba(255, 255, 255, 0.6);
+    }
+    .card, .detail-surface, .action { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42); }
+    .detail-edge { background: var(--surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .navbar-material {
+      inset: 0;
+      -webkit-mask-image: none;
+      mask-image: none;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.42);
+    }
+    .sheet { -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: inset 0 1px 0 var(--edge-light); }
+    .close-disc { background: #48484a; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .action:active, .detail-close:active .close-disc { transform: none; opacity: 0.7; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 2.5v11M2.5 8h11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-up" viewBox="0 0 16 16"><path d="M3 10.5 8 5.5l5 5" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="m3.8 7 8.2 6 8.2-6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6.8 18.2c1-2.3 2.9-3.5 5.2-3.5s4.2 1.2 5.2 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M13.6 4.5l-3.2 15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3.5V8h4.5M9 12.5h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<nav class="navbar" id="navbar" aria-label="Site">
+  <div class="navbar-material" id="navMaterial" aria-hidden="true"></div>
+  <div class="navbar-inner">
+    <a class="nav-link nav-back" href="./index.html" aria-label="All variations">
+      <svg viewBox="0 0 10 17" aria-hidden="true"><path d="M8.5 1.5 1.5 8.5l7 7" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Variations
+    </a>
+    <span class="nav-title" id="navTitle" aria-hidden="true">Kaushik Vada</span>
+    <a class="nav-link nav-action" href="../../resume.pdf" target="_blank" rel="noopener">Résumé</a>
+  </div>
+</nav>
+
+<div id="app">
+  <header class="masthead">
+    <h1 class="large-title" id="largeTitle">Kaushik Vada</h1>
+    <p class="subtitle">Physical Design Intern at Tenstorrent<span class="sub-sep"> · </span><span class="sub-b nowrap">EE at UC Riverside</span></p>
+  </header>
+
+  <main class="feed" id="feed">
+    <ul class="feed-list">
+
+      <li class="slot">
+        <article class="card" aria-labelledby="t-tenstorrent">
+          <div class="face">
+            <p class="face-meta"><span class="now-dot" aria-hidden="true"></span><span><span class="vh">Current role. </span>Sep 2026 – Present · Santa Clara, CA</span></p>
+            <h2 class="face-title" id="t-tenstorrent"><button class="card-hit" type="button" aria-haspopup="dialog" aria-controls="detailSurface" aria-expanded="false">Tenstorrent</button></h2>
+            <p class="face-role">Physical Design Intern</p>
+            <div class="face-foot">
+              <p class="face-stat">
+                <span class="stat-kicker">Target</span>
+                <span class="stat-num"><span aria-hidden="true">~46 → 10</span><span class="vh">approximately 46 to 10</span></span>
+                <span class="stat-cap">PVT corners — investigating AI/ML-based corner selection</span>
+              </p>
+              <span class="face-more" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>
+            </div>
+          </div>
+          <div class="card-detail" hidden>
+            <p class="d-label">Highlights</p>
+            <ul class="points">
+              <li>Perform <b>static timing analysis (STA)</b> on die-to-die interconnects in a next-generation AI accelerator SoC with RISC-V cores, using Synopsys PrimeTime with post-route netlists, SPEF parasitics, UPF power intent, and SDC constraints.</li>
+              <li>Analyze <b>multi-voltage timing paths</b> through level shifters connecting a dynamic-voltage SoC domain to a fixed-voltage PHY domain, evaluating voltage-dependent timing behavior.</li>
+              <li>Extract <b>corner-specific parasitics</b> using Synopsys StarRC on Fusion Compiler databases and configure automated RTL-to-GDS flows from synthesis through route optimization.</li>
+              <li>Investigate <b>AI/ML-based corner selection</b> targeting a reduction from approximately 46 PVT corners to 10, evaluating derating and guard-banding strategies to preserve timing coverage and reduce signoff turnaround.</li>
+            </ul>
+          </div>
+        </article>
+      </li>
+
+      <li class="slot">
+        <article class="card" aria-labelledby="t-arm">
+          <div class="face">
+            <p class="face-meta"><span>Jun – Sep 2026 · San Diego, CA</span></p>
+            <h2 class="face-title" id="t-arm"><button class="card-hit" type="button" aria-haspopup="dialog" aria-controls="detailSurface" aria-expanded="false">Arm</button></h2>
+            <p class="face-role">SoC Physical Design Intern</p>
+            <div class="face-foot">
+              <p class="face-stat">
+                <span class="stat-num">38.5%</span>
+                <span class="stat-cap">Lower measured mean RX data-path delay</span>
+              </p>
+              <span class="face-more" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>
+            </div>
+          </div>
+          <div class="card-detail" hidden>
+            <p class="d-label">Highlights</p>
+            <ul class="points">
+              <li><b>Delivered a tape-out candidate</b> for an active ARM AGI-CPU SoC block, incorporating activity-driven power optimization and two-pass placement optimizations and executing the Cadence Innovus flow from floorplanning through placement, CTS, routing, and post-route optimization; the resulting implementation was advanced for downstream STA and timing evaluation.</li>
+              <li>Compared multiple FSDB activity profiles to guide selection based on power and timing, with activity-driven power optimization yielding <b>18.4–19.5% lower reported power</b> versus baselines under matched workloads.</li>
+              <li>Co-developed a two-pass placement flow with Cadence engineers, <b>reducing estimated power by 5.86% and cell area by 2.45%</b>.</li>
+              <li><b>Reduced measured mean RX data-path delay by 38.5%</b> using Codex-assisted statistical modeling of prior runs to guide setup-margin tuning, deliberately tightening constraints on positive-slack I/O paths to trigger optimization toward full-chip timing requirements.</li>
+              <li>Enabled <b>reusable STA and PrimeTime PX workflows</b>, developing analysis scripts to compare implementation results, audit generated Tcl/YAML against applied constraints, and support international engineering teams.</li>
+            </ul>
+          </div>
+        </article>
+      </li>
+
+      <li class="slot">
+        <article class="card" aria-labelledby="t-vsclab">
+          <div class="face">
+            <p class="face-meta"><span>Sep 2025 – Apr 2026 · Riverside, CA</span></p>
+            <h2 class="face-title" id="t-vsclab"><button class="card-hit" type="button" aria-haspopup="dialog" aria-controls="detailSurface" aria-expanded="false">VSCLab</button></h2>
+            <p class="face-role">Undergraduate Researcher</p>
+            <div class="face-foot">
+              <p class="face-stat">
+                <span class="stat-num">RISC-V</span>
+                <span class="stat-cap">Custom open-source CPU core — pipeline stages and verification infrastructure</span>
+              </p>
+              <span class="face-more" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>
+            </div>
+          </div>
+          <div class="card-detail" hidden>
+            <p class="d-lede">VLSI Systems &amp; Computer Architecture Lab (VSCLab), University of California, Riverside</p>
+            <p class="d-label">Highlights</p>
+            <ul class="points">
+              <li>Designing and implementing a <b>custom open-source RISC-V CPU core</b>, developing pipeline stages and verification infrastructure targeting full functional correctness.</li>
+              <li>Applying <b>Verilog and Synopsys RTL-to-gate flows</b> in an active research environment, reinforcing skills in synthesis and gate-level simulation.</li>
+              <li>Authoring and refining <b>SDC timing constraints</b> in Synopsys Design Compiler as part of the lab’s constraint-driven synthesis workflow.</li>
+            </ul>
+          </div>
+        </article>
+      </li>
+
+      <li class="slot">
+        <article class="card" aria-labelledby="t-minigpu">
+          <div class="face">
+            <p class="face-meta"><span>Project · Mar 2026 – Present</span></p>
+            <h2 class="face-title" id="t-minigpu"><button class="card-hit" type="button" aria-haspopup="dialog" aria-controls="detailSurface" aria-expanded="false">MiniGPU-2</button></h2>
+            <p class="face-role">Custom Graphics Accelerator ASIC</p>
+            <div class="face-foot">
+              <p class="face-stat">
+                <span class="stat-num">32nm</span>
+                <span class="stat-cap">SAED checkpoint — floorplanning and place-and-route in Cadence Innovus</span>
+              </p>
+              <span class="face-more" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>
+            </div>
+          </div>
+          <div class="card-detail" hidden>
+            <p class="d-label">Highlights</p>
+            <ul class="points">
+              <li>Implementing <b>floorplanning and place-and-route</b> in Cadence Innovus on a SAED 32nm checkpoint, iterating on timing and congestion for a custom ASIC.</li>
+              <li>Worked with a team on <b>RTL-to-gate synthesis</b> in Synopsys Design Compiler and Cadence Genus for a SystemVerilog graphics pipeline spanning vertex transformation and rasterization.</li>
+              <li>Designed <b>dual-clock asynchronous FIFOs</b> with Gray-coded pointer synchronizers to support communication across clock domains.</li>
+            </ul>
+          </div>
+        </article>
+      </li>
+
+      <li class="slot">
+        <article class="card" aria-labelledby="t-ucr">
+          <div class="face">
+            <p class="face-meta"><span>Aug 2023 – Jun 2027 · Riverside, CA</span></p>
+            <h2 class="face-title" id="t-ucr"><button class="card-hit" type="button" aria-haspopup="dialog" aria-controls="detailSurface" aria-expanded="false">UC Riverside</button></h2>
+            <p class="face-role">B.S. Electrical Engineering</p>
+            <div class="face-foot">
+              <p class="face-stat">
+                <span class="stat-num">3.93</span>
+                <span class="stat-cap">GPA out of 4.00 · UC Regents Distinguished Scholar</span>
+              </p>
+              <span class="face-more" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>
+            </div>
+          </div>
+          <div class="card-detail" hidden>
+            <p class="d-lede">Bachelor of Science in Electrical Engineering, University of California, Riverside</p>
+            <p class="d-label">Relevant coursework</p>
+            <ul class="course">
+              <li>Introduction to VLSI</li>
+              <li>Data Structures and Algorithms</li>
+              <li>Design and Architecture of Computer Systems</li>
+              <li>Machine Organization and Assembly Language</li>
+              <li>Digital Logic Design</li>
+              <li>GPU Architecture and Programming</li>
+            </ul>
+          </div>
+        </article>
+      </li>
+
+    </ul>
+  </main>
+
+  <footer class="foot">
+    <nav aria-label="More">
+      <a href="../../resume.pdf" target="_blank" rel="noopener">Résumé (PDF)</a>
+      <a href="./index.html">All variations</a>
+      <a href="../../index.html">Current site</a>
+    </nav>
+  </footer>
+</div>
+
+<div class="sheet-scrim" id="sheetScrim" aria-hidden="true"></div>
+
+<section class="sheet" id="sheet" role="region" aria-labelledby="sheetTitle" data-detent="peek">
+  <div class="sheet-head" id="sheetHead">
+    <button class="grabber" id="grabber" type="button" aria-expanded="false" aria-controls="sheetBody">
+      <span class="grabber-pill" aria-hidden="true"></span>
+      <span class="sheet-row">
+        <span class="sheet-title" id="sheetTitle">Skills · Contact</span>
+        <span class="vh" id="sheetState">, collapsed</span>
+        <span class="sheet-chev" id="sheetChev" aria-hidden="true"><svg><use href="#i-up"/></svg></span>
+      </span>
+    </button>
+  </div>
+  <div class="sheet-body" id="sheetBody">
+    <div class="sheet-inner" id="sheetInner">
+      <h2 class="vh">Contact</h2>
+      <ul class="actions">
+        <li><a class="action is-primary" href="mailto:kaushikvada3@gmail.com"><svg aria-hidden="true"><use href="#i-mail"/></svg>Email</a></li>
+        <li><a class="action" href="https://linkedin.com/in/kaushikv198" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-person"/></svg>LinkedIn</a></li>
+        <li><a class="action" href="https://github.com/kaushikvada" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-code"/></svg>GitHub</a></li>
+        <li><a class="action" href="../../resume.pdf" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-doc"/></svg>Résumé</a></li>
+      </ul>
+      <p class="contact-line"><a href="mailto:kaushikvada3@gmail.com">kaushikvada3@gmail.com</a> · <a href="tel:+18583058647">858-305-8647</a></p>
+
+      <h2 class="vh">Technical skills</h2>
+      <div class="skills">
+        <section class="skill">
+          <h3>Languages</h3>
+          <p class="skill-line">Verilog · C/C++ · Python · TCL</p>
+        </section>
+        <section class="skill">
+          <h3>Tools</h3>
+          <dl class="skill-line tools">
+            <div><dt>Synopsys</dt><dd>PrimeTime, PrimeTime PX, Design Compiler, Fusion Compiler, VCS</dd></div>
+            <div><dt>Cadence</dt><dd>Innovus</dd></div>
+            <div><dt>Xilinx</dt><dd>Vivado</dd></div>
+          </dl>
+        </section>
+        <section class="skill">
+          <h3>Concepts</h3>
+          <ul class="skill-line concepts">
+            <li>Physical Design</li>
+            <li>Floorplanning</li>
+            <li>Placement &amp; Routing</li>
+            <li>Clock Tree Synthesis (CTS)</li>
+            <li>Static Timing Analysis (STA)</li>
+            <li>SDC Timing Constraints</li>
+            <li>Power Analysis &amp; Optimization</li>
+            <li>RTL Design</li>
+            <li>Computer Architecture</li>
+          </ul>
+        </section>
+        <section class="skill">
+          <h3>Protocols</h3>
+          <p class="skill-line">UART · APB · Valid/Ready Handshake</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="detail" id="detail" hidden>
+  <div class="detail-scrim" id="detailScrim"></div>
+  <div class="detail-surface" id="detailSurface" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="detail-edge" id="detailEdge" aria-hidden="true"></div>
+    <div class="detail-scroll" id="detailScroll" role="region" aria-labelledby="detailTitle" tabindex="-1">
+      <div class="close-dock"><button class="detail-close" id="detailClose" type="button" aria-label="Close"><span class="close-disc"><svg aria-hidden="true"><use href="#i-x"/></svg></span></button></div>
+      <div class="detail-hero" id="detailHero"></div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+</div>
+
+<div id="safeProbe" aria-hidden="true" style="position:fixed;left:0;bottom:0;width:0;height:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none"></div>
+
+<script src="spring.js"></script>
+<script>
+(() => {
+  'use strict';
+  const F = window.Fluid;
+  if (!F) return;
+
+  const doc = document;
+  const root = doc.documentElement;
+  const $ = (sel, scope = doc) => scope.querySelector(sel);
+  const $$ = (sel, scope = doc) => Array.from(scope.querySelectorAll(sel));
+  const { clamp, lerp } = F;
+  const reduced = () => F.reducedMotion;
+  const remPx = () => parseFloat(getComputedStyle(root).fontSize) || 16;
+
+  const app = $('#app');
+  const navbar = $('#navbar');
+  const navMaterial = $('#navMaterial');
+  const navTitle = $('#navTitle');
+  const largeTitle = $('#largeTitle');
+
+  let vw = root.clientWidth;
+  let vh = innerHeight;
+  let rCard = 28;
+
+  // Inverse and slope of Fluid.rubberband, so a drag can be picked up
+  // from a banded position and the release velocity matches what's on screen.
+  const bandSlope = (over, dim, c = 0.55) => (dim * dim * c) / (dim + c * Math.abs(over)) ** 2;
+  function unbandOver(y, dim, c = 0.55) {
+    const a = Math.min(Math.abs(y), dim * 0.95);
+    return Math.sign(y) * (a * dim) / (c * (dim - a));
+  }
+
+  // Animate a spring's fields directly (no callbacks) — used while a finger owns the value.
+  function hold(spring, value) {
+    spring.stop();
+    spring.value = value;
+    spring.target = value;
+    spring.velocity = 0;
+  }
+
+  // Several values on one spring configuration, stepped in a single rAF loop
+  // so the frame is rendered once. Same physics as Fluid.Spring.
+  class SpringGroup {
+    constructor(keys, { precision = {}, onUpdate, onRest }) {
+      this.keys = keys;
+      this.ch = {};
+      for (const k of keys) this.ch[k] = { value: 0, target: 0, velocity: 0, precision: precision[k] ?? 0.1 };
+      this.dampingRatio = 1;
+      this.response = 0.4;
+      this.onUpdate = onUpdate;
+      this.onRest = onRest;
+      this._raf = 0;
+      this._last = 0;
+      this._tick = this._tick.bind(this);
+    }
+    get animating() { return this._raf !== 0; }
+    get values() {
+      const o = {};
+      for (const k of this.keys) o[k] = this.ch[k].value;
+      return o;
+    }
+    stop() {
+      if (this._raf) cancelAnimationFrame(this._raf);
+      this._raf = 0;
+    }
+    // Pin every value (a finger owns them, or a layout jump). No callbacks.
+    hold(values) {
+      this.stop();
+      for (const k of this.keys) {
+        const c = this.ch[k];
+        c.value = c.target = values[k];
+        c.velocity = 0;
+      }
+    }
+    to(targets, { dampingRatio = 1, response = 0.4, velocity = null } = {}) {
+      this.dampingRatio = dampingRatio;
+      this.response = response;
+      for (const k of this.keys) {
+        this.ch[k].target = targets[k];
+        if (velocity) this.ch[k].velocity = velocity[k];
+      }
+      if (!this._raf) {
+        this._last = performance.now();
+        this._raf = requestAnimationFrame(this._tick);
+      }
+    }
+    _tick(now) {
+      const dt = clamp((now - this._last) / 1000, 0, 1 / 20);
+      this._last = now;
+      const stiff = (2 * Math.PI / this.response) ** 2;
+      const damp = (4 * Math.PI * this.dampingRatio) / this.response;
+      const steps = Math.max(1, Math.ceil(dt * 240));
+      const h = dt / steps;
+      let rest = true;
+      for (const k of this.keys) {
+        const c = this.ch[k];
+        for (let i = 0; i < steps; i++) {
+          c.velocity += (-stiff * (c.value - c.target) - damp * c.velocity) * h;
+          c.value += c.velocity * h;
+        }
+        if (Math.abs(c.value - c.target) < c.precision && Math.abs(c.velocity) < c.precision * 10) {
+          c.value = c.target;
+          c.velocity = 0;
+        } else {
+          rest = false;
+        }
+      }
+      this._raf = rest ? 0 : requestAnimationFrame(this._tick);
+      this.onUpdate && this.onUpdate();
+      if (rest && this.onRest) this.onRest();
+    }
+  }
+
+  // ── Presenting view pushes back while a card or the large sheet is up ──
+  const push = { detail: 0, sheet: 0 };
+  function applyPush() {
+    const p = reduced() ? 0 : Math.max(push.detail, push.sheet);
+    if (p < 0.0005) {
+      if (app.style.transform) { app.style.transform = ''; app.style.transformOrigin = ''; }
+      return;
+    }
+    app.style.transformOrigin = `50% ${(scrollY + vh / 2).toFixed(1)}px`;
+    app.style.transform = `scale(${(1 - 0.06 * p).toFixed(4)})`;
+  }
+
+  // ── Large title → inline title, continuous with scroll ──
+  const header = { edge: 0, start: 0, range: 1 };
+  function measureHeader() {
+    const top = largeTitle.offsetTop;
+    const h = largeTitle.offsetHeight;
+    header.edge = top - navbar.offsetHeight;
+    header.start = header.edge + h * 0.2;
+    header.range = Math.max(1, h * 0.6);
+  }
+  let headerQueued = false;
+  function renderHeader() {
+    headerQueued = false;
+    const y = scrollY;
+    const c = clamp((y - header.start) / header.range, 0, 1);
+    const m = clamp((y - header.edge) / 16, 0, 1);
+    largeTitle.style.opacity = c > 0 ? (1 - c).toFixed(3) : '';
+    navTitle.style.opacity = c.toFixed(3);
+    navTitle.style.transform = c < 1 ? `translate3d(0, ${((1 - c) * 0.375 * remPx()).toFixed(2)}px, 0)` : '';
+    navMaterial.style.opacity = m.toFixed(3);
+  }
+  addEventListener('scroll', () => {
+    if (!headerQueued) { headerQueued = true; requestAnimationFrame(renderHeader); }
+  }, { passive: true });
+
+  // Keep a downward pull at the top of a scroller from turning into native
+  // overscroll, so pointer events keep flowing to the drag handler.
+  function guardTouch(scroller, wants) {
+    let y0 = 0;
+    scroller.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+    scroller.addEventListener('touchmove', e => {
+      if (e.cancelable && wants(e.touches[0].clientY - y0)) e.preventDefault();
+    }, { passive: false });
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Card → detail. The surface is the card: one element whose
+  //  rect (left, top, width, height, corner radius) is five springs.
+  //  Width maps to a uniform scale; height maps to a clip.
+  // ════════════════════════════════════════════════════════════════
+  const D = {
+    root: $('#detail'),
+    scrim: $('#detailScrim'),
+    surface: $('#detailSurface'),
+    scroller: $('#detailScroll'),
+    hero: $('#detailHero'),
+    body: $('#detailBody'),
+    close: $('#detailClose'),
+    card: null,
+    more: null,
+    open: false,      // logical state
+    visible: false,   // on screen (stays true while it flies home)
+    C: null,          // the card's resting rect
+    G: null,          // the open rect
+    g: null,          // active gesture
+    suppress: false,
+    tracker: new F.VelocityTracker(),
+  };
+  D.edge = $('#detailEdge');
+  D.scrollBack = 0;   // scroll offset being returned to the top as the card closes
+  const morph = new SpringGroup(['L', 'T', 'W', 'H', 'R'], {
+    precision: { L: 0.15, T: 0.15, W: 0.15, H: 0.15, R: 0.05 },
+    onUpdate: renderDetail,
+    onRest: detailRest,
+  });
+  const sp = morph.ch;
+  // Reduced motion swaps the morph for a cross-fade carried by this value.
+  const fade = new F.Spring(1, { dampingRatio: 1, response: 0.24, precision: 0.002, onUpdate: renderDetail, onRest: detailRest });
+  const SCRIM = 0.72;
+  const focusDetail = () => D.close.focus({ preventScroll: true });
+
+  const cardGeom = () => ({ L: D.C.x, T: D.C.y, W: D.C.w, H: D.C.h, R: rCard });
+  const openGeom = () => ({ L: D.G.x, T: D.G.y, W: D.G.w, H: D.G.h, R: D.G.r });
+
+  // 0 at the card's rect, 1 at the open rect.
+  const morphProgress = () => clamp((sp.H.value - D.C.h) / Math.max(40, D.G.h - D.C.h), 0, 1);
+  // Closing from further down, the content is back at its face by 35% progress.
+  const scrollShare = p => clamp((p - 0.35) / 0.65, 0, 1);
+
+  function renderDetail() {
+    if (!D.visible) return;
+    const G = D.G;
+    const W = Math.max(1, sp.W.value);
+    const S = W / G.w;
+    const H = sp.H.value;
+    const clipBottom = Math.max(0, G.h - H / S);
+    const radius = Math.max(0, sp.R.value) / S;
+    D.surface.style.transform = `translate3d(${sp.L.value.toFixed(2)}px, ${sp.T.value.toFixed(2)}px, 0) scale(${S.toFixed(5)})`;
+    D.surface.style.clipPath = `inset(0 0 ${clipBottom.toFixed(2)}px 0 round ${radius.toFixed(2)}px)`;
+    const f = clamp(fade.value, 0, 1);
+    D.surface.style.opacity = f < 1 ? f.toFixed(3) : '';
+
+    const p = morphProgress();
+    // Under reduced motion the scrim leads the cross-fade, so the incoming
+    // surface fades in over an already-dark backdrop rather than over the feed.
+    const ps = reduced() ? clamp(f / 0.4, 0, 1) : f;
+    D.scrim.style.opacity = (SCRIM * p * ps).toFixed(3);
+    D.close.style.opacity = clamp((p - 0.1) / 0.4, 0, 1).toFixed(3);
+    D.body.style.opacity = clamp((p - 0.05) / 0.6, 0, 1).toFixed(3);
+    if (D.more) D.more.style.opacity = (1 - clamp(p * 4, 0, 1)).toFixed(3);
+    // Closing from further down: the content scrolls home as a function of the
+    // morph (so it reverses with it), and the card lands showing its face.
+    if (D.scrollBack) D.scroller.scrollTop = D.scrollBack * scrollShare(p);
+
+    push.detail = p * f;
+    applyPush();
+    renderSheet();
+  }
+
+  function detailRest() {
+    if ((D.g && D.g.active) || morph.animating || fade.animating || !D.visible) return;
+    if (D.open) D.scrollBack = 0;
+    else finishClose();
+  }
+
+  function naturalRect(el) {
+    const t = app.style.transform;
+    if (t) app.style.transform = '';
+    const r = el.getBoundingClientRect();
+    if (t) app.style.transform = t;
+    return { x: r.left, y: r.top, w: r.width, h: r.height };
+  }
+
+  function layoutDetail() {
+    const rem = remPx();
+    const C = D.C;
+    let G;
+    if (vw < 40 * rem) {
+      G = { x: 0, y: 0, w: vw, h: vh, r: 0 };
+    } else {
+      const w = Math.min(vw - 2 * rem, Math.round(C.w * 1.06));
+      const m = 1.5 * rem;
+      G = { x: Math.round((vw - w) / 2), y: m, w, h: vh - 2 * m, r: rCard };
+    }
+    D.G = G;
+    D.surface.style.setProperty('--detail-r', G.r + 'px');
+    // The hero is the card face rendered k× larger, so at scale 1/k it is the card.
+    const k = G.w / C.w;
+    const fs = parseFloat(getComputedStyle(D.card.querySelector('.face')).fontSize);
+    D.surface.style.width = G.w + 'px';
+    D.surface.style.height = G.h + 'px';
+    D.surface.style.setProperty('--face-fs', (fs * k).toFixed(3) + 'px');
+    D.surface.style.setProperty('--hero-pad', (1.5 * fs * k).toFixed(2) + 'px');
+  }
+
+  function fillDetail(card) {
+    const face = card.querySelector('.face').cloneNode(true);
+    face.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+    const hit = face.querySelector('.card-hit');
+    hit.replaceWith(doc.createTextNode(hit.textContent));
+    face.querySelector('.face-title').id = 'detailTitle';
+    D.hero.replaceChildren(face);
+    D.more = face.querySelector('.face-more');
+    const src = card.querySelector('.card-detail').cloneNode(true);
+    D.body.replaceChildren(...src.childNodes);
+  }
+
+  function animateDetail(target, { velocity = null, flick = false } = {}) {
+    const to = target === 'open' ? openGeom() : cardGeom();
+    if (reduced()) {
+      if (target === 'open') {
+        morph.hold(to);
+        renderDetail();
+        fade.to(1, { dampingRatio: 1, response: 0.24 });
+      } else {
+        fade.to(0, { dampingRatio: 1, response: 0.24 });
+      }
+      return;
+    }
+    // Critically damped by default; a little give only after a flick.
+    const cfg = flick ? { dampingRatio: 0.8, response: 0.4 } : { dampingRatio: 1, response: 0.4 };
+    morph.to(to, { ...cfg, velocity });
+  }
+
+  function setExpanded(card, on) {
+    card.querySelector('.card-hit').setAttribute('aria-expanded', String(on));
+  }
+
+  function openDetail(card) {
+    if (D.visible && D.card !== card) {
+      morph.hold(cardGeom());
+      finishClose();
+    }
+    if (D.visible) {
+      // Same card, still flying home: turn it around from where it is.
+      D.open = true;
+      setExpanded(card, true);
+      refreshModal();
+      focusDetail();
+      animateDetail('open');
+      return;
+    }
+    D.card = card;
+    D.C = naturalRect(card.parentElement);
+    const pressed = card.getBoundingClientRect();   // presentation rect, press scale included
+    card._press && card._press.set(1);
+    fillDetail(card);
+    layoutDetail();
+    D.visible = true;
+    D.root.hidden = false;
+    D.scroller.scrollTop = 0;
+    D.scrollBack = 0;
+    D.edge.style.opacity = '0';
+    morph.hold({ L: pressed.left, T: pressed.top, W: pressed.width, H: pressed.height, R: rCard * (pressed.width / D.C.w) });
+    hold(fade, reduced() ? 0 : 1);
+    card.classList.add('is-source');
+    setExpanded(card, true);
+    D.open = true;
+    refreshModal();
+    renderDetail();
+    animateDetail('open');
+    focusDetail();
+  }
+
+  function closeDetail(opts) {
+    if (!D.open) return;
+    D.open = false;
+    const top = D.scroller.scrollTop;
+    const share = scrollShare(morphProgress());
+    if (!reduced() && !D.scrollBack && top > 0 && share > 0.05) D.scrollBack = top / share;
+    setExpanded(D.card, false);
+    refreshModal();
+    D.card.querySelector('.card-hit').focus({ preventScroll: true });
+    animateDetail('card', opts);
+  }
+
+  function finishClose() {
+    const a = doc.activeElement;
+    const lost = !a || a === doc.body || D.root.contains(a);
+    D.visible = false;
+    D.root.hidden = true;
+    D.card.classList.remove('is-source');
+    D.scrollBack = 0;
+    hold(fade, 1);
+    push.detail = 0;
+    applyPush();
+    renderSheet();
+    refreshLock();
+    // A press on the surface mid-flight can take focus with it; give it back to the opener.
+    if (lost) D.card.querySelector('.card-hit').focus({ preventScroll: true });
+  }
+
+  // ── Drag to dismiss ──
+  const SHRINK = 0.14;
+  function dragDetail(raw) {
+    const g = D.g, b = g.base;
+    const eff = raw >= 0 ? raw : F.rubberband(raw, vh);
+    const reach = vh * 0.6;
+    const f = reduced() || eff <= 0 ? 1 : 1 - SHRINK * Math.min(eff / reach, 1);
+    g.raw = raw;
+    g.eff = eff;
+    // Scale about the grab point, so the spot under the finger stays under it.
+    morph.hold({
+      L: g.gx - (g.gx - b.L) * f,
+      T: g.gy + eff - (g.gy - b.T) * f,
+      W: b.W * f,
+      H: b.H * f,
+      R: reduced() ? b.R : lerp(b.R, Math.max(b.R, rCard), clamp(eff / 160, 0, 1)),
+    });
+    renderDetail();
+  }
+
+  function letGoDetail() {
+    const g = D.g;
+    D.g = null;
+    if (g && g.caught && !g.active) animateDetail(D.open ? 'open' : 'card');
+  }
+
+  D.surface.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || !D.visible || e.target.closest('#detailClose')) return;
+    D.suppress = false;
+    const caught = morph.animating;
+    if (caught) morph.hold(morph.values);   // catch it mid-flight
+    D.g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, type: e.pointerType, caught, active: false };
+  });
+
+  // Move/up are tracked on window: before the slop threshold there is no
+  // capture yet, and the pointer may wander off the surface.
+  addEventListener('pointermove', e => {
+    const g = D.g;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.active) {
+      const dx = e.clientX - g.x0;
+      const dy = e.clientY - g.y0;
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) return letGoDetail();
+      if (Math.abs(dy) < 10) return;
+      const atTop = D.scroller.scrollTop <= 0;
+      if (!atTop || (dy < 0 && g.type !== 'mouse' && !g.caught)) return letGoDetail();
+      g.active = true;
+      try { D.surface.setPointerCapture(e.pointerId); } catch (_) {}
+      // Anchor at pointer-down, not at the slop boundary: the spot that was
+      // grabbed stays under the finger.
+      g.ay = g.y0;
+      g.gx = g.x0;
+      g.gy = g.y0;
+      g.base = morph.values;
+      D.tracker.reset();
+      D.suppress = true;
+      root.classList.add('is-dragging');
+      const sel = getSelection();
+      if (sel && sel.rangeCount) sel.removeAllRanges();
+    }
+    D.tracker.add(e.clientY);
+    dragDetail(e.clientY - g.ay);
+  });
+
+  function endDetailDrag(e, cancelled) {
+    const g = D.g;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.active) return letGoDetail();
+    D.g = null;
+    root.classList.remove('is-dragging');
+    setTimeout(() => { D.suppress = false; }, 0);
+
+    const raw = cancelled ? 0 : D.tracker.velocity();
+    const v = g.raw < 0 ? raw * bandSlope(g.raw, vh) : raw;
+    // Decide with momentum: where would this throw come to rest?
+    const projected = g.eff + F.project(v);
+    const dismiss = v > -100 && projected > vh * 0.2;
+    const flick = Math.abs(v) > 400;
+
+    // Hand each spring the velocity its edge actually had under the finger.
+    const reach = vh * 0.6;
+    const df = !reduced() && g.eff > 0 && g.eff < reach ? -SHRINK / reach : 0;
+    const b = g.base;
+    const velocity = {
+      L: -(g.gx - b.L) * df * v,
+      T: v - (g.gy - b.T) * df * v,
+      W: b.W * df * v,
+      H: b.H * df * v,
+      R: 0,
+    };
+
+    if (dismiss) {
+      if (D.open) closeDetail({ velocity, flick });
+      else animateDetail('card', { velocity, flick });
+      return;
+    }
+    if (!D.open) {
+      D.open = true;
+      setExpanded(D.card, true);
+      refreshModal();
+    }
+    // Snapping back open: keep focus inside the dialog.
+    if (!D.surface.contains(doc.activeElement)) focusDetail();
+    if (reduced()) {
+      morph.hold(openGeom());
+      renderDetail();
+      return;
+    }
+    animateDetail('open', { velocity, flick });
+  }
+  addEventListener('pointerup', e => endDetailDrag(e, false));
+  addEventListener('pointercancel', e => endDetailDrag(e, true));
+  D.surface.addEventListener('click', e => {
+    if (D.suppress) { D.suppress = false; e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  guardTouch(D.scroller, dy => (D.g && D.g.active) || (D.scroller.scrollTop <= 0 && dy > 0));
+
+  D.scrim.addEventListener('click', () => closeDetail());
+  D.close.addEventListener('click', () => closeDetail());
+  D.scroller.addEventListener('scroll', () => {
+    D.edge.style.opacity = clamp(D.scroller.scrollTop / 24, 0, 1).toFixed(3);
+  }, { passive: true });
+
+  // ── Cards: press on pointer-down, open on click ──
+  for (const card of $$('.card')) {
+    const hit = card.querySelector('.card-hit');
+    const press = new F.Spring(1, {
+      dampingRatio: 1,
+      response: 0.3,
+      precision: 0.0004,
+      onUpdate: v => { card.style.transform = Math.abs(v - 1) < 1e-4 ? '' : `scale(${v.toFixed(4)})`; },
+    });
+    card._press = press;
+    let down = null;
+    const release = () => {
+      card.classList.remove('is-pressed');
+      if (press.target !== 1) press.to(1, { dampingRatio: 1, response: 0.35 });
+    };
+    hit.addEventListener('pointerdown', e => {
+      if (e.button !== 0) return;
+      down = { x: e.clientX, y: e.clientY, moved: false };
+      if (reduced()) card.classList.add('is-pressed');
+      else press.to(0.97, { dampingRatio: 1, response: 0.25 });
+    });
+    hit.addEventListener('pointermove', e => {
+      if (down && !down.moved && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) {
+        down.moved = true;
+        release();
+      }
+    });
+    hit.addEventListener('pointerup', release);
+    hit.addEventListener('pointerleave', release);
+    hit.addEventListener('pointercancel', () => { if (down) down.moved = true; release(); });
+    hit.addEventListener('click', e => {
+      const moved = down && down.moved;
+      down = null;
+      if (moved) { e.preventDefault(); return; }
+      openDetail(card);
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════════
+  //  Bottom sheet with detents: peek, medium, large
+  // ════════════════════════════════════════════════════════════════
+  const S = {
+    el: $('#sheet'),
+    head: $('#sheetHead'),
+    body: $('#sheetBody'),
+    inner: $('#sheetInner'),
+    grabber: $('#grabber'),
+    scrim: $('#sheetScrim'),
+    chev: $('#sheetChev'),
+    stateText: $('#sheetState'),
+    target: 'peek',
+    y: { peek: 0, medium: 0, large: 0 },
+    H: 0,
+    peekH: 0,
+    scrollable: false,
+    g: null,
+    suppress: false,
+    tracker: new F.VelocityTracker(),
+  };
+  S.spring = new F.Spring(innerHeight + 24, { dampingRatio: 1, response: 0.38, precision: 0.2, onUpdate: renderSheet, onRest: () => refreshModal() });
+  const ORDER = ['peek', 'medium', 'large'];
+  const STATE_TEXT = { peek: ', collapsed', medium: ', half height', large: ', full height' };
+
+  function layoutSheet() {
+    const rem = remPx();
+    const headH = S.head.offsetHeight;
+    const natural = headH + S.inner.offsetHeight;
+    const gap = vw < 40 * rem ? Math.max(2.75 * rem, vh * 0.06) : 4 * rem;
+    const H = Math.round(Math.min(vh - gap, natural));
+    S.H = H;
+    // Extra material below the fold so an upward rubber-band never shows a gap.
+    S.el.style.height = H + Math.round(vh * 0.5) + 'px';
+    S.body.style.height = H - headH + 'px';
+    S.peekH = headH + $('#safeProbe').offsetHeight;
+    S.scrollable = natural > H + 1;
+    S.el.classList.toggle('is-scrollable', S.scrollable);
+    const yL = vh - H;
+    const yP = vh - S.peekH;
+    S.y = { peek: yP, medium: clamp(Math.round(vh * 0.5), yL + 4 * rem, yP - 4 * rem), large: yL };
+    root.style.setProperty('--peek-h', S.peekH + 'px');
+    if (S.g && S.g.active) return;
+    if (S.spring.animating) S.spring.to(S.y[S.target]);
+    else { hold(S.spring, S.y[S.target]); renderSheet(); }
+  }
+
+  function renderSheet() {
+    if (!S.H) return;
+    const y = S.spring.value;
+    // The sheet steps down out of the way of an open card (under reduced motion it stays put, under the scrim).
+    const hide = reduced() ? 0 : push.detail * (S.peekH + 24);
+    S.el.style.transform = `translate3d(0, ${(y + hide).toFixed(2)}px, 0)`;
+    // Scrim and push-back are functions of position, not of state.
+    const t = clamp((S.y.peek - y) / Math.max(1, S.y.peek - S.y.large), 0, 1);
+    S.scrim.style.opacity = (0.5 * t).toFixed(3);
+    // Upper half of the travel: the chevron turns to say the next tap goes down.
+    const ps = clamp((S.y.medium - y) / Math.max(1, S.y.medium - S.y.large), 0, 1);
+    S.chev.style.transform = ps > 0 ? `rotate(${(180 * ps).toFixed(1)}deg)` : '';
+    if (Math.abs(ps - push.sheet) > 1e-4) { push.sheet = ps; applyPush(); }
+  }
+
+  function band(raw) {
+    const { large, peek } = S.y;
+    if (raw < large) return large + F.rubberband(raw - large, vh);
+    if (raw > peek) return peek + F.rubberband(raw - peek, vh);
+    return raw;
+  }
+  function unband(y) {
+    const { large, peek } = S.y;
+    if (y < large) return large + unbandOver(y - large, vh);
+    if (y > peek) return peek + unbandOver(y - peek, vh);
+    return y;
+  }
+  function bandSlopeAt(raw) {
+    const { large, peek } = S.y;
+    if (raw < large) return bandSlope(raw - large, vh);
+    if (raw > peek) return bandSlope(raw - peek, vh);
+    return 1;
+  }
+  function nearestDetent(y) {
+    let best = 'peek', d = Infinity;
+    for (const n of ORDER) {
+      const dd = Math.abs(S.y[n] - y);
+      if (dd < d) { d = dd; best = n; }
+    }
+    return best;
+  }
+
+  function snapSheet(name, { velocity, flick = false } = {}) {
+    const prev = S.target;
+    S.target = name;
+    const y = S.y[name];
+    if (reduced()) {
+      S.spring.to(y, { instant: true });
+    } else {
+      const o = flick ? { ...F.presets.sheet } : { dampingRatio: 1, response: 0.38 };
+      if (velocity !== undefined) o.velocity = velocity;
+      S.spring.to(y, o);
+    }
+    if (prev !== name) sheetChanged();
+  }
+
+  function sheetChanged() {
+    const up = S.target !== 'peek';
+    S.el.dataset.detent = S.target;
+    S.grabber.setAttribute('aria-expanded', String(up));
+    S.stateText.textContent = STATE_TEXT[S.target];
+    if (up) {
+      S.el.setAttribute('role', 'dialog');
+      S.el.setAttribute('aria-modal', 'true');
+    } else {
+      S.el.setAttribute('role', 'region');
+      S.el.removeAttribute('aria-modal');
+      S.body.scrollTop = 0;
+    }
+    S.scrim.classList.toggle('is-active', up);
+    refreshModal();
+    // Focus enters the sheet when it becomes modal, and returns to the grabber
+    // (its opener) when it collapses, however it was dismissed.
+    const a = doc.activeElement;
+    if (up ? !S.el.contains(a) : (!a || a === doc.body || S.body.contains(a))) S.grabber.focus({ preventScroll: true });
+  }
+
+  function sheetLetGo() {
+    const g = S.g;
+    S.g = null;
+    if (g && g.caught && !g.active) S.spring.to(S.y[S.target]);
+  }
+
+  function sheetGesture(zone, canDrag) {
+    zone.addEventListener('pointerdown', e => {
+      if (e.button !== 0 || D.visible) return;
+      S.suppress = false;
+      const caught = S.spring.animating;
+      if (caught) { S.spring.stop(); S.spring.velocity = 0; }   // catch it mid-flight
+      S.g = { id: e.pointerId, zone, canDrag, x0: e.clientX, y0: e.clientY, caught, active: false };
+    });
+  }
+  sheetGesture(S.head, () => true);
+  sheetGesture(S.body, dy => S.target !== 'large' || !S.scrollable || (dy > 0 && S.body.scrollTop <= 0));
+
+  addEventListener('pointermove', e => {
+    const g = S.g;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.active) {
+      const dx = e.clientX - g.x0;
+      const dy = e.clientY - g.y0;
+      if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) return sheetLetGo();
+      if (Math.abs(dy) < 10) return;
+      if (!g.canDrag(dy)) return sheetLetGo();
+      g.active = true;
+      try { g.zone.setPointerCapture(e.pointerId); } catch (_) {}
+      g.ay = g.y0;   // grab offset: the spot pressed stays under the finger
+      g.start = unband(S.spring.value);
+      S.tracker.reset();
+      S.suppress = true;
+      root.classList.add('is-dragging');
+    }
+    S.tracker.add(e.clientY);
+    g.raw = g.start + (e.clientY - g.ay);
+    S.spring.set(band(g.raw));
+  });
+  function sheetEnd(e, cancelled) {
+    const g = S.g;
+    if (!g || e.pointerId !== g.id) return;
+    if (!g.active) return sheetLetGo();
+    S.g = null;
+    root.classList.remove('is-dragging');
+    setTimeout(() => { S.suppress = false; }, 0);
+    const v = (cancelled ? 0 : S.tracker.velocity()) * bandSlopeAt(g.raw);
+    const projected = S.spring.value + F.project(v, 0.998);
+    snapSheet(nearestDetent(projected), { velocity: v, flick: Math.abs(v) > 400 });
+  }
+  addEventListener('pointerup', e => sheetEnd(e, false));
+  addEventListener('pointercancel', e => sheetEnd(e, true));
+  guardTouch(S.body, dy => (S.g && S.g.active) || (S.target === 'large' && S.scrollable && S.body.scrollTop <= 0 && dy > 0));
+
+  S.el.addEventListener('click', e => {
+    if (S.suppress) { S.suppress = false; e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  // A press that moves on a link must drag the sheet, not start a native link drag.
+  S.el.addEventListener('dragstart', e => e.preventDefault());
+  D.surface.addEventListener('dragstart', e => e.preventDefault());
+
+  const NEXT = { peek: 'medium', medium: 'large', large: 'peek' };
+  S.grabber.addEventListener('click', () => snapSheet(NEXT[S.target]));
+  S.grabber.addEventListener('keydown', e => {
+    const i = ORDER.indexOf(S.target);
+    if (e.key === 'ArrowUp' && i < ORDER.length - 1) { e.preventDefault(); snapSheet(ORDER[i + 1]); }
+    if (e.key === 'ArrowDown' && i > 0) { e.preventDefault(); snapSheet(ORDER[i - 1]); }
+  });
+  S.scrim.addEventListener('click', () => snapSheet('peek'));
+  // Tabbing into content that's below the fold brings the sheet fully up.
+  // (Keyboard focus only: a press on a link must not move the sheet.)
+  S.body.addEventListener('focusin', e => {
+    if (!e.target.matches(':focus-visible')) return;
+    if (S.target !== 'large') snapSheet('large');
+    if (!S.scrollable) requestAnimationFrame(() => { S.body.scrollTop = 0; });
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Modality, focus, keyboard
+  // ════════════════════════════════════════════════════════════════
+  function refreshLock() {
+    root.classList.toggle('is-locked', D.visible || S.target !== 'peek');
+  }
+  function refreshModal() {
+    const sheetUp = S.target !== 'peek';
+    const blocked = D.open || sheetUp;
+    app.inert = blocked;
+    navbar.inert = blocked;
+    S.el.inert = D.open;
+    // At peek the body is offscreen; keep it out of the tab order once it has
+    // landed there, but stay grabbable while it's still on its way down.
+    S.body.inert = !sheetUp && !S.spring.animating && !(S.g && S.g.active);
+    D.surface.setAttribute('aria-hidden', String(!D.open));
+    D.close.tabIndex = D.open ? 0 : -1;
+    D.scroller.tabIndex = D.open ? 0 : -1;
+    refreshLock();
+  }
+
+  function trapFocus(e) {
+    const scope = D.open ? D.surface : S.target !== 'peek' ? S.el : null;
+    if (!scope) return;
+    const items = $$('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', scope)
+      .filter(n => n.tabIndex >= 0 && !n.closest('[inert]') && n.getClientRects().length);
+    if (!items.length) { e.preventDefault(); return; }
+    const first = items[0];
+    const last = items[items.length - 1];
+    const inside = scope.contains(doc.activeElement);
+    if (e.shiftKey && (doc.activeElement === first || !inside)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (doc.activeElement === last || !inside)) { e.preventDefault(); first.focus(); }
+  }
+
+  doc.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (D.open) { e.preventDefault(); closeDetail(); }
+      else if (S.target !== 'peek') { e.preventDefault(); snapSheet('peek'); S.grabber.focus({ preventScroll: true }); }
+    } else if (e.key === 'Tab') {
+      trapFocus(e);
+    }
+  });
+
+  // ════════════════════════════════════════════════════════════════
+  //  Layout
+  // ════════════════════════════════════════════════════════════════
+  function relayoutDetail() {
+    D.C = naturalRect(D.card.parentElement);
+    layoutDetail();
+    if (D.g && D.g.active) return;
+    if (morph.animating) { animateDetail(D.open ? 'open' : 'card'); return; }
+    morph.hold(D.open ? openGeom() : cardGeom());
+    renderDetail();
+  }
+
+  function layoutAll() {
+    vw = root.clientWidth;
+    vh = innerHeight;
+    const card = $('.card');
+    if (card) rCard = parseFloat(getComputedStyle(card).borderTopLeftRadius) || rCard;
+    measureHeader();
+    renderHeader();
+    layoutSheet();
+    if (D.visible) relayoutDetail();
+  }
+
+  let resizeQueued = false;
+  addEventListener('resize', () => {
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => { resizeQueued = false; layoutAll(); });
+  });
+  if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(layoutAll);
+
+  layoutAll();
+  refreshModal();
+  // The sheet rises into its peek detent once, so it reads as something you can pull.
+  if (!reduced()) {
+    hold(S.spring, vh + 24);
+    renderSheet();
+    S.spring.to(S.y.peek, { dampingRatio: 1, response: 0.5 });
+  }
+
+  window.__sheets = { D, S, sp, morph, fade, push, snapSheet, openDetail, closeDetail };
+})();
+</script>
+</body>
+</html>

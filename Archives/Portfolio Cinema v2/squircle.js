@@ -64,18 +64,34 @@
     return d + 'Z';
   }
 
+  // Layout size (offsetWidth/Height), not the bounding rect — a card
+  // mid-way through a scale transform must not get a shrunken outline.
+  function shape(el, w = el.offsetWidth, h = el.offsetHeight) {
+    if (!w || !h) return;
+    const r = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+    const outer = squircleD(0, 0, w, h, r);
+    const inner = squircleD(RING, RING, w - 2 * RING, h - 2 * RING, r - RING);
+    el.style.clipPath = `path("${outer}")`;
+    el.style.setProperty('--sq-ring', `path(evenodd,"${outer} ${inner}")`);
+  }
+
   function apply() {
-    for (const el of els) {
-      const rect = el.getBoundingClientRect();
-      const w = rect.width, h = rect.height;
-      if (!w || !h) continue;
-      const r = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
-      const outer = squircleD(0, 0, w, h, r);
-      const inner = squircleD(RING, RING, w - 2 * RING, h - 2 * RING, r - RING);
-      el.style.clipPath = `path("${outer}")`;
-      el.style.setProperty('--sq-ring', `path(evenodd,"${outer} ${inner}")`);
-    }
+    for (const el of els) shape(el);
     document.documentElement.classList.add('sq');
+  }
+
+  // Elements that change size in place (the experience rows grow open)
+  // re-cut their outline in the same frame, before paint — otherwise the
+  // stale clip-path would crop the content that is growing in.
+  if ('ResizeObserver' in window) {
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) {
+        const box = e.borderBoxSize && e.borderBoxSize[0];
+        if (box) shape(e.target, box.inlineSize, box.blockSize);
+        else shape(e.target);
+      }
+    });
+    for (const el of els) ro.observe(el);
   }
 
   let raf;

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kaushik Vada — Design Variations</title>
+<meta name="description" content="Four Apple-design explorations of Kaushik Vada's portfolio — Keynote, Sheets, Flick, and Glass." />
+<meta name="theme-color" content="#000000" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23E0B96C' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23E0B96C'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg: #000;
+    --surface: #0d0d0f;
+    --ink: rgba(255,255,255,0.96);
+    --ink-2: rgba(255,255,255,0.76);
+    --ink-3: rgba(255,255,255,0.52);
+    --hair: rgba(255,255,255,0.10);
+    --gold: rgba(224,185,108,1);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --gutter: clamp(1rem, 4vw, 3rem);
+    --radius: 1.375rem;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 100%/1.5 var(--sans);
+    font-optical-sizing: auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 0.5rem; }
+
+  .wrap { max-width: 72rem; margin: 0 auto; padding: 0 var(--gutter); }
+
+  header { padding: clamp(4rem, 12vh, 8rem) 0 clamp(2.5rem, 6vh, 4rem); }
+  .eyebrow {
+    font: 500 0.75rem/1.2 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 1.25rem;
+  }
+  h1 {
+    font-weight: 700;
+    font-size: clamp(2.5rem, 7vw, 4.75rem);
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+  }
+  .lede {
+    margin-top: 1.25rem;
+    max-width: 36rem;
+    font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+    line-height: 1.45;
+    letter-spacing: -0.01em;
+    color: var(--ink-2);
+  }
+  .lede a { color: var(--ink); text-underline-offset: 0.2em; text-decoration-color: var(--hair); }
+  .lede a:hover { text-decoration-color: var(--ink-3); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1rem, 2vw, 1.5rem);
+    padding-bottom: clamp(4rem, 10vh, 7rem);
+  }
+  .card {
+    display: flex; flex-direction: column;
+    text-decoration: none;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px var(--hair);
+    transition: box-shadow 0.2s ease;
+  }
+  .card:hover { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22); }
+  /* Feedback on press, instant */
+  .card:active { transform: scale(0.985); transition: transform 0.1s ease-out; }
+
+  .thumb {
+    aspect-ratio: 16 / 10;
+    background: #050506;
+    border-bottom: 1px solid var(--hair);
+    overflow: hidden;
+  }
+  .thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top center;
+    display: block;
+  }
+  .thumb img[hidden] + .ph { display: grid; }
+  .ph {
+    display: none;
+    height: 100%;
+    place-items: center;
+    font: 500 0.75rem var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .body { padding: 1.5rem 1.625rem 1.75rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+  .num { font: 500 0.75rem/1 var(--mono); letter-spacing: 0.08em; color: var(--ink-3); }
+  .card h2 {
+    font-weight: 650;
+    font-size: 1.625rem;
+    line-height: 1.1;
+    letter-spacing: -0.022em;
+  }
+  .card p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; letter-spacing: -0.005em; }
+  .tags {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    font: 0.75rem/1.6 var(--mono);
+    letter-spacing: 0.02em;
+    color: var(--ink-3);
+  }
+  .open {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    font-weight: 500; font-size: 0.9375rem;
+    color: var(--ink);
+    margin-top: 0.25rem;
+  }
+  .open svg { width: 0.9em; height: 0.9em; }
+
+  footer {
+    border-top: 1px solid var(--hair);
+    padding: 1.75rem 0 2.5rem;
+    display: flex; flex-wrap: wrap; gap: 0.75rem 1.75rem; justify-content: space-between;
+    font: 0.75rem/1.4 var(--mono);
+    letter-spacing: 0.04em;
+    color: var(--ink-3);
+  }
+  footer nav { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; }
+  footer a { text-decoration: none; color: var(--ink-2); }
+  footer a:hover { color: var(--ink); }
+
+  @media (max-width: 760px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card:active { transform: none; }
+  }
+  @media (prefers-contrast: more) {
+    :root { --ink-2: rgba(255,255,255,0.9); --ink-3: rgba(255,255,255,0.72); --hair: rgba(255,255,255,0.4); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Kaushik Vada · Portfolio explorations</p>
+    <h1>Four ways to tell<br />the same story.</h1>
+    <p class="lede">Each variation is built from the same résumé and leans on a different part of Apple's interface playbook — type, touch, momentum, and material. The <a href="../../index.html">current site</a> has been updated too.</p>
+  </header>
+
+  <main class="grid">
+    <a class="card" href="../../index.html">
+      <div class="thumb"><img src="thumbs/keynote.png" alt="" loading="lazy" onerror="this.hidden=true" /><div class="ph">Keynote</div></div>
+      <div class="body">
+        <span class="num">01</span>
+        <h2>Keynote</h2>
+        <p>A product-launch page. A KV chip lifts its lid and builds itself from RTL to GDS as you scroll; the Arm and Tenstorrent numbers are the heroes.</p>
+        <span class="tags">Chip reveal · RTL-to-GDS scrollytelling · live die visuals · typography</span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="sheets.html">
+      <div class="thumb"><img src="thumbs/sheets.png" alt="" loading="lazy" onerror="this.hidden=true" /><div class="ph">Sheets</div></div>
+      <div class="body">
+        <span class="num">02</span>
+        <h2>Sheets</h2>
+        <p>A native-feeling app. Cards expand in place and drag down to dismiss; skills live in a sheet with detents you can fling.</p>
+        <span class="tags">Direct manipulation · velocity handoff · momentum projection · rubber-banding</span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="flick.html">
+      <div class="thumb"><img src="thumbs/flick.png" alt="" loading="lazy" onerror="this.hidden=true" /><div class="ph">Flick</div></div>
+      <div class="body">
+        <span class="num">03</span>
+        <h2>Flick</h2>
+        <p>The career as a timeline you throw. Drag back in time, or scrub the ruler — it lands where your gesture was going.</p>
+        <span class="tags">1:1 tracking · gesture disambiguation · interruptible springs · scrubbing</span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span>
+      </div>
+    </a>
+
+    <a class="card" href="glass.html">
+      <div class="thumb"><img src="thumbs/glass.png" alt="" loading="lazy" onerror="this.hidden=true" /><div class="ph">Glass</div></div>
+      <div class="body">
+        <span class="num">04</span>
+        <h2>Glass</h2>
+        <p>Spatial windows floating over a floorplanned die. Materials carry the hierarchy; panels grow toward your pointer.</p>
+        <span class="tags">Materials &amp; depth · materialize · anchored expansion · reduced transparency</span>
+        <span class="open">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12.5 5.5 19 12l-6.5 6.5"/></svg></span>
+      </div>
+    </a>
+  </main>
+
+  <footer>
+    <span>Built from the current résumé</span>
+    <nav aria-label="Elsewhere">
+      <a href="../../index.html">Current site</a>
+      <a href="../../resume.pdf" target="_blank" rel="noopener">Résumé</a>
+      <a href="mailto:kaushikvada3@gmail.com">Email</a>
+    </nav>
+  </footer>
+</div>
+</body>
+</html>

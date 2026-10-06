@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Portfolio Cinema v2 (static)",
+      "name": "Portfolio (static)",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["--yes", "serve", ".", "-l", "5175", "--no-clipboard"],
       "port": 5175

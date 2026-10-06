@@ -1,22 +1,23 @@
 // ─────────────────────────────────────────────────────────────
 // All the smaller easter eggs + the `/` command palette.
-//   • Command palette: synth · pnr · tapeout · rtl · clock · power · route · konami · help
+//   • Command palette: synth · sta · pnr · tapeout · rtl · clock · power · route · konami · help
 //   • Key-hint that fades in after 10s of idle
 //   • Konami code → Vivado boot log in the terminal drawer
 //   • Hover "3.93 GPA" → "STA: WNS +0.07ns" cycling stats
 //   • Scroll to footer → fake Makefile target prints in
-//   • Shift while scrolling → film-grain + lens-flare overlay
+//   • Shift + wheel → film-grain + lens-flare overlay
 //   • Idle 30s → graph forms "KV" in Manhattan routing
 // ─────────────────────────────────────────────────────────────
 (() => {
   // ═══ 1. COMMAND PALETTE (`/`) ════════════════════════════════
   const palette = document.createElement('div');
   palette.className = 'cmd-palette';
+  palette.setAttribute('aria-hidden', 'true');
   palette.innerHTML = `
-    <div class="cmd-card">
+    <div class="cmd-card" role="dialog" aria-modal="true" aria-label="Command palette">
       <div class="cmd-head">
-        <span class="cmd-prompt">▸</span>
-        <input class="cmd-input" placeholder="run command…  e.g. synth, tapeout, rtl, clock, power, route, help" />
+        <span class="cmd-prompt" aria-hidden="true">▸</span>
+        <input class="cmd-input" aria-label="Command" autocomplete="off" spellcheck="false" placeholder="run command…  e.g. sta, tapeout, rtl, clock, power, route, help" />
         <span class="cmd-esc">ESC</span>
       </div>
       <ul class="cmd-list"></ul>
@@ -30,7 +31,8 @@
   document.body.appendChild(palette);
 
   const COMMANDS = [
-    { id: 'synth',   name: 'synth',    desc: 'open synthesis report drawer',            run: openTerminal },
+    { id: 'synth',   name: 'synth',    desc: 'open the timing report drawer',           run: openTerminal },
+    { id: 'sta',     name: 'sta',      desc: 'report_timing — alias for synth',         run: openTerminal },
     { id: 'tapeout', name: 'tapeout',  desc: 'collapse graph into die floorplan',       run: () => window.__triggerTapeout?.() },
     { id: 'pnr',     name: 'pnr',      desc: 'place & route — alias for tapeout',       run: () => window.__triggerTapeout?.() },
     { id: 'rtl',     name: 'rtl',      desc: 'flip graph edges to Manhattan routing',   run: () => window.__triggerRTL?.(3000) },
@@ -44,17 +46,31 @@
   const cmdInput = palette.querySelector('.cmd-input');
   const cmdList  = palette.querySelector('.cmd-list');
   let cursor = 0;
+  let returnFocus = null;
+  // Hover only selects a row after the pointer has really moved since
+  // the palette opened — a resting cursor must not steal the first
+  // match (and with it, what Enter runs).
+  let hoverArmed = false;
 
   function openPalette() {
+    if (!palette.classList.contains('open')) returnFocus = document.activeElement;
+    hoverArmed = false;
     palette.classList.add('open');
+    palette.setAttribute('aria-hidden', 'false');
     cmdInput.value = '';
     cursor = 0;
     renderList('');
-    setTimeout(() => cmdInput.focus(), 30);
+    cmdInput.focus({ preventScroll: true });
   }
   function closePalette() {
     palette.classList.remove('open');
+    palette.setAttribute('aria-hidden', 'true');
     cmdInput.blur();
+    // Give focus back to wherever the reader was.
+    if (returnFocus && returnFocus !== document.body && document.contains(returnFocus)) {
+      returnFocus.focus({ preventScroll: true });
+    }
+    returnFocus = null;
   }
   function renderList(filter) {
     const f = filter.trim().toLowerCase();
@@ -67,7 +83,10 @@
     `).join('');
     cmdList._matches = matches;
     cmdList.querySelectorAll('.cmd-row').forEach((row, i) => {
-      row.addEventListener('mouseenter', () => { cursor = i; refresh(); });
+      row.addEventListener('pointermove', () => {
+        if (!hoverArmed || cursor === i) return;
+        cursor = i; refresh();
+      });
       row.addEventListener('click', () => fire(matches[i]));
     });
   }
@@ -89,11 +108,23 @@
     if (e.key === 'Escape') { closePalette(); }
     else if (e.key === 'ArrowDown') { cursor = (cursor + 1) % Math.max(list.length, 1); refresh(); e.preventDefault(); }
     else if (e.key === 'ArrowUp')   { cursor = (cursor - 1 + list.length) % Math.max(list.length, 1); refresh(); e.preventDefault(); }
-    else if (e.key === 'Enter')     { fire(list[cursor]); }
+    // Consume Enter: focus is handed back to the page inside fire(), and an
+    // unconsumed Enter would land on (and click) whatever just got focus.
+    else if (e.key === 'Enter')     { e.preventDefault(); fire(list[cursor]); }
+    // A modal with one control: Tab stays on it.
+    else if (e.key === 'Tab')       { e.preventDefault(); }
   });
+  palette.addEventListener('pointermove', (e) => {
+    if (e.movementX || e.movementY) hoverArmed = true;
+  });
+
+  // Click on the dimmed backdrop closes the palette.
+  palette.addEventListener('click', (e) => { if (e.target === palette) closePalette(); });
 
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName) && document.activeElement !== cmdInput) return;
+    // Don't stack the palette on top of an open project sheet.
+    if (document.querySelector('.proj-detail.is-open')) return;
     if (e.key === '/' && !palette.classList.contains('open')) {
       e.preventDefault();
       openPalette();
@@ -130,50 +161,38 @@
       konIdx = (k === KONAMI[0]) ? 1 : 0;
     }
   });
+  // An FPGA build log — Vivado makes bitstreams, not tapeouts, so the
+  // joke stays technically honest. Lines fit 56 columns (phone width).
   function vivadoBoot() {
-    const drawer = document.getElementById('terminal-drawer');
-    const out = document.getElementById('terminal-output');
-    if (!drawer || !out) return;
-    out.innerHTML = '';
-    drawer.classList.add('open');
     const lines = [
-      ['dim',  '> Vivado v2024.1 (64-bit) — emulated handoff'],
-      ['dim',  'Loading Vivado...                                                          [OK]'],
-      ['dim',  'Loading Tcl libraries...                                                   [OK]'],
+      ['dim',  '> vivado -mode batch -source kv.tcl'],
+      ['dim',  'Loading Vivado ...                                [OK]'],
+      ['dim',  'Loading Tcl libraries ...                         [OK]'],
       ['dim',  ''],
-      ['norm', '# ─────────────────────────────────────────────────────────────'],
-      ['norm', '# KV-01 · 7nm · top.v'],
-      ['norm', '# ─────────────────────────────────────────────────────────────'],
+      ['norm', '# ──────────────────────────────────────────────────'],
+      ['norm', '# KV-01 · top.v · fpga build'],
+      ['norm', '# ──────────────────────────────────────────────────'],
       ['dim',  ''],
-      ['dim',  'Phase 1: synth_design'],
-      ['norm', '    INFO: [Synth 8-256]  done synthesizing module top'],
-      ['norm', '    INFO: [Synth 8-7080] Parallel synthesis criteria reached'],
-      ['gold', '  ✓ synth_design completed successfully            (12,847 cells)'],
+      ['dim',  'synth_design -top top'],
+      ['norm', '  INFO: [Synth 8-256] done synthesizing module top'],
+      ['gold', '  ✓ synth_design complete'],
       ['dim',  ''],
-      ['dim',  'Phase 2: opt_design + place_design + route_design'],
-      ['norm', '    INFO: [Place 30-575] Placement Phase 1 complete'],
-      ['norm', '    INFO: [Route 35-39] Initial routing'],
-      ['gold', '  ✓ route_design completed                          (DRC: clean)'],
+      ['dim',  'opt_design · place_design · route_design'],
+      ['norm', '  INFO: [Place 30-575] placement phase 1 complete'],
+      ['norm', '  INFO: [Route 35-39] initial routing'],
+      ['gold', '  ✓ route_design complete'],
       ['dim',  ''],
-      ['dim',  'Phase 3: report_timing_summary'],
-      ['norm', '    Worst Negative Slack (WNS):      +0.074 ns'],
-      ['norm', '    Total Negative Slack (TNS):      +0.000 ns'],
-      ['norm', '    Worst Hold Slack   (WHS):        +0.038 ns'],
-      ['gold', '  ✓ TIMING CLEAN. METHODOLOGY CLEAN. POWER CLEAN.'],
+      ['dim',  'report_timing_summary'],
+      ['norm', '  WNS  +0.074 ns    TNS  0.000 ns    WHS  +0.038 ns'],
       ['dim',  ''],
-      ['gold', '  Tapeout ready. KV-01 → fab queue. ETA: now.'],
+      ['dim',  'write_bitstream kv01.bit'],
+      ['gold', '  ✓ Bitstream written. Timing met.'],
+      ['dim',  '  (An FPGA build, not a tapeout. The ASIC work'],
+      ['dim',  '   lives in Innovus.)'],
       ['dim',  ''],
       ['dim',  '> _'],
     ];
-    lines.forEach(([type, text], i) => {
-      setTimeout(() => {
-        const span = document.createElement('span');
-        span.className = type === 'dim' ? 't-dim' : type === 'gold' ? 't-gold' : '';
-        span.textContent = text + '\n';
-        out.appendChild(span);
-        out.scrollTop = out.scrollHeight;
-      }, i * 70);
-    });
+    window.openTerminal?.(lines, 70);
   }
 
   // ═══ 4. GPA hover → cycle of engineering stats ══════════════
@@ -192,7 +211,7 @@
     gpaCell.style.transition = 'color 0.2s';
     gpaCell.addEventListener('mouseenter', () => {
       idx = 0;
-      gpaCell.style.color = '#FFC75A';
+      gpaCell.style.color = 'var(--gold)';
       gpaCell.textContent = cycle[idx];
       hovTimer = setInterval(() => {
         idx = (idx + 1) % cycle.length;
@@ -220,7 +239,7 @@
       'stamping easter eggs .................... [OK]',
       'linking ................................. [OK]',
       '',
-      '# portfolio.elf  ready  ·  drc clean  ·  tape it out',
+      '# portfolio.elf  ready  ·  0 warnings  ·  ship it',
     ].join('\n');
     footer.appendChild(make);
     const io = new IntersectionObserver((es) => {
@@ -229,14 +248,29 @@
     io.observe(footer);
   }
 
-  // ═══ 6. SHIFT WHILE SCROLLING → grain + flare ═══════════════
+  // ═══ 6. SHIFT + WHEEL → grain + flare ═══════════════════════
+  // Only an actual Shift-scroll triggers it: Shift on its own is part
+  // of Shift+Tab and of typing capitals, and must never tint the page.
+  // Skipped under reduced motion, and while typing in a field.
   const flare = document.createElement('div');
   flare.className = 'film-flare';
+  flare.setAttribute('aria-hidden', 'true');
   flare.innerHTML = `<div class="film-grain"></div><div class="film-vignette"></div>`;
   document.body.appendChild(flare);
-  let shiftHeld = false;
-  addEventListener('keydown', (e) => { if (e.key === 'Shift') { shiftHeld = true; flare.classList.add('on'); } });
-  addEventListener('keyup', (e) => { if (e.key === 'Shift') { shiftHeld = false; flare.classList.remove('on'); } });
+  const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+  let flareOff = 0;
+  const flareStop = () => { clearTimeout(flareOff); flare.classList.remove('on'); };
+  addEventListener('wheel', (e) => {
+    if (!e.shiftKey || motionQuery.matches) return;
+    const a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return;
+    if (palette.classList.contains('open')) return;
+    flare.classList.add('on');
+    clearTimeout(flareOff);
+    flareOff = setTimeout(flareStop, 450);
+  }, { passive: true });
+  addEventListener('keyup', (e) => { if (e.key === 'Shift') flareStop(); });
+  addEventListener('blur', flareStop);
 
   // ═══ 7. UTILITIES (clock + power) ═══════════════════════════
   function clockPulse() {
