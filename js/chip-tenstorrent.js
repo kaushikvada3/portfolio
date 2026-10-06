@@ -63,7 +63,8 @@
 .kvc-tt-stage{display:grid;margin-top:clamp(1.5rem,3vw,2rem)}
 .kvc-tt-panel{grid-area:1/1;min-width:0;display:flex;flex-direction:column}
 .kvc-tt-view{position:relative;aspect-ratio:16/9;touch-action:pan-y;-webkit-user-select:none;user-select:none}
-@container (max-width:37.49rem){.kvc-tt-view{aspect-ratio:4/5}}
+@media (orientation:portrait){@container (max-width:37.49rem){.kvc-tt-view{aspect-ratio:4/5}}}
+@media (orientation:landscape) and (max-height:32.49rem){.kvc-tt-view{width:100%;max-width:calc((100svh - 3.25rem - 6rem) * 16 / 9);margin-inline:auto}}
 .kvc-tt-b .kvc-tt-view{cursor:grab}
 .kvc-tt-b .kvc-tt-view.is-dragging{cursor:grabbing}
 
@@ -72,6 +73,7 @@
 .kvc-tt-flabel{display:block;font-size:.875rem;font-weight:600;letter-spacing:-.006em;line-height:1.3;color:rgba(255,255,255,.8)}
 .kvc-tt-meta{font-family:${K.font.mono};font-size:.6875rem;letter-spacing:.04em;line-height:1.4;color:rgba(255,255,255,.52)}
 .kvc-tt-ends{display:flex;justify-content:space-between;gap:1rem}
+@media (pointer:coarse){.kvc-tt-meta{font-size:.75rem}}
 
 .kvc-tt-slider{position:relative;height:2.75rem;margin-inline:.75rem;cursor:pointer;touch-action:pan-y;outline:none}
 .kvc-tt-rail{position:absolute;left:0;right:0;top:50%;height:4px;margin-top:-2px;border-radius:2px;background:rgba(255,255,255,.16);overflow:hidden}
@@ -314,6 +316,8 @@
     }
 
     function buildA() {
+      // WebKit frees canvas memory late: zero the previous size's layers now.
+      if (G) for (const c of [G.base, G.hi, G.halo, G.labL, G.rev && G.rev.c]) if (c) { c.width = 0; c.height = 0; }
       const W = A.w, H = A.h, dpr = A.dpr;
       const portrait = H > W * 1.02;
       const AL = portrait ? H : W, CL = portrait ? W : H;
@@ -328,12 +332,28 @@
       const s = Math.min(1.15, Math.max(0.7, (portrait ? W : H) / (portrait ? 360 : 640)));
       const a0 = fr.a0 * AL, a1 = a0 + fr.Ld * AL;
       const b0 = a1 + fr.G * AL, b1 = b0 + fr.Lr * AL;
-      const c0 = fr.c0 * CL, c1 = fr.c1 * CL, Cd = c1 - c0;
+      const pkgM = 16 * s;
+      // Canvas labels are 10px at the default text size and follow a larger
+      // root size (Dynamic Type / browser zoom) up to 1.5x.
+      const rootK = parseFloat(getComputedStyle(document.documentElement).fontSize) / 16 || 1;
+      const LAB = Math.round(10 * Math.min(1.5, Math.max(1, rootK)) * 2) / 2;
+      // Landscape keeps a band above the package for the 10px label row
+      // (baseline 14s over the package edge); on short phones the die
+      // gives up a few px rather than the labels losing their tops.
+      const c0 = portrait ? fr.c0 * CL : Math.max(fr.c0 * CL, pkgM + 14 * s + LAB + 3);
+      // Labels never shrink, so in portrait the die narrows until the
+      // right-hand label column fits (only bites below ~300px wide).
+      const mctx = layer(1, 1, 1).ctx;
+      mctx.font = `500 ${LAB}px ${K.font.mono}`;
+      if ('letterSpacing' in mctx) mctx.letterSpacing = `${(LAB * 0.08).toFixed(2)}px`;
+      const tw = (t) => mctx.measureText(t.toUpperCase()).width;
+      const colW = Math.max(tw('dynamic V'), tw('shifters'), tw('fixed V'));
+      const c1 = portrait ? Math.min(fr.c1 * CL, CL - colW - pkgM - 12 * s - 3) : fr.c1 * CL;
+      const Cd = c1 - c0;
       const Lp = Math.max(30, fr.phy * (a1 - a0));
       const aPhy0 = a1 - Lp, aB = aPhy0 - 11 * s, bPhy1 = b0 + Lp;
       const n = fr.n;
       const laneC = (i) => lerp(c0 + Cd * 0.13, c1 - Cd * 0.13, i / (n - 1));
-      const pkgM = 16 * s;
 
       // Tiles: the dynamic-voltage SoC region (left) and its mirror on die 1.
       const tiles = (ta0, ta1, tc0, tc1) => {
@@ -536,33 +556,55 @@
       // Kept off the base layer so the reveal can fade each one in whole
       // once the light has passed it, never clipped mid-glyph.
       const labs = [], ticks = [];
+      // LAB (set above) never drops below 10px: smaller caps read as texture.
       const lab = (text, x, y, a, o = {}) => labs.push({ text, x, y, a, o });
       const tick = (x0, y0, x1, y1, a) => ticks.push({ x0, y0, x1, y1, a });
       if (!portrait) {
+        // Labels keep their size as the view narrows; when they'd collide
+        // they shorten, and the least needed one ('D2D lanes': the lanes
+        // are self-evident) steps out.
+        const roomTop = a1 - (a0 + pad) - 16;
+        const [soc, phy] = tw('SoC · dynamic V') + tw('PHY · fixed V') <= roomTop ? ['SoC · dynamic V', 'PHY · fixed V'] : ['Dynamic V', 'Fixed V'];
         const yTop = c0 - pkgM - 14 * s;
-        lab('SoC · dynamic V', a0 + pad, yTop, a0 + pad + 50 * s);
-        lab('PHY · fixed V', a1, yTop, a1, { align: 'right' });
+        // On the narrowest views the short pair still crowds; slide the left
+        // label out toward the package edge to keep a clear 16px between them.
+        const xSoc = Math.max(a0 - pkgM, Math.min(a0 + pad, a1 - 16 - tw(soc) - tw(phy)));
+        lab(soc, xSoc, yTop, a0 + pad + 50 * s);
+        lab(phy, a1, yTop, a1, { align: 'right' });
         const yBot = c1 + pkgM + 22 * s;
         const xl = Math.round(aB) + 0.5;
-        tick(xl, c1 + 6, xl, yBot - 12 * s, aB);
+        tick(xl, c1 + 6, xl, yBot - 12 * s - (LAB - 10), aB);
         lab('Level shifters', aB, yBot, aB, { align: 'center' });
-        const xg = Math.round((a1 + b0) / 2) + 0.5;
-        tick(xg, laneC(n - 1) + 6 * s, xg, yBot - 12 * s, (a1 + b0) / 2);
-        lab('D2D lanes', (a1 + b0) / 2, yBot, (a1 + b0) / 2, { align: 'center' });
+        const aG = (a1 + b0) / 2;
+        if (aG - aB >= (tw('Level shifters') + tw('D2D lanes')) / 2 + 16) {
+          const xg = Math.round(aG) + 0.5;
+          tick(xg, laneC(n - 1) + 6 * s, xg, yBot - 12 * s - (LAB - 10), aG);
+          lab('D2D lanes', aG, yBot, aG, { align: 'center' });
+        }
       } else {
         // Portrait: a right-hand label column with leader ticks.
         const xL = c1 + pkgM + 12 * s;
-        const two = (l1, l2, aMid) => {
-          lab(l1, xL, aMid - 2, aMid);
-          lab(l2, xL, aMid + 11 * s, aMid);
-          tick(c1 + 3, Math.round(aMid) - 5.5, xL - 6, Math.round(aMid) - 5.5, aMid);
+        const lh = Math.max(11 * s, LAB * 1.25);
+        // Pairs sit by their feature, but each starts at least 1.6 lines
+        // below the last so they never merge into one block of text. A pair
+        // pushed so far that its tick leaves the feature steps out instead
+        // (only 'D2D lanes' can, and the lanes read on their own).
+        let next = -Infinity;
+        const two = (l1, l2, aMid, hi = Infinity) => {
+          const y = Math.max(aMid - 2, next);
+          const yt = Math.round(y - 0.35 * LAB) + 0.5;
+          if (yt > hi) return;
+          lab(l1, xL, y, aMid);
+          lab(l2, xL, y + lh, aMid);
+          tick(c1 + 3, yt, xL - 6, yt, aMid);
+          next = y + lh * 2.6;
         };
         two('SoC', 'dynamic V', (a0 + aB) / 2);
         two('Level', 'shifters', aB + 5);
         two('PHY', 'fixed V', aPhy0 + Lp * 0.75);
-        two('D2D', 'lanes', (a1 + b0) / 2 + 4);
+        two('D2D', 'lanes', (a1 + b0) / 2 + 4, b0 - 3);
       }
-      const labSize = Math.round(10 * Math.min(1, s * 1.05));
+      const labSize = LAB;
       G.drawLabels = (c, sweep) => {
         const fe = 70 * s;
         const al = (a) => (sweep === undefined ? 1 : smoothstep((sweep - a - 30 * s) / fe));
@@ -575,7 +617,7 @@
         }
         for (const L of labs) {
           const k_ = al(L.a);
-          if (k_ > 0.004) K.label(c, L.text, L.x, L.y, { size: labSize, color: white(0.54 * boost * k_), ...L.o });
+          if (k_ > 0.004) K.label(c, L.text, L.x, L.y, { size: labSize, color: white(0.6 * boost * k_), ...L.o });
         }
       };
       const labL = layer(W, H, dpr);
@@ -854,6 +896,10 @@
       // Touch: nothing changes until the finger shows intent — a tap, or a
       // horizontal move past the slop. A vertical scroll leaves it untouched.
       if (e.pointerType === 'touch') { pend = { id: e.pointerId, x0: e.clientX, y0: e.clientY, onKnob, kx, v0: knobS.target }; return; }
+      // Mouse/pen: stop Safari from starting a text selection when the drag
+      // leaves the rail; focus by hand since preventDefault skips it.
+      e.preventDefault();
+      slider.focus({ preventScroll: true });
       beginSlide(e.pointerId, e.clientX, onKnob, kx, knobS.target);
     });
     listen(slider, 'pointermove', (e) => {

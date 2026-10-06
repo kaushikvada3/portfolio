@@ -255,12 +255,12 @@
       labels: [
         { id: 'vertex', text: 'Vertex stage', x: 154, y: 264 },
         { id: 'raster', text: 'Rasterizer', x: 1062, y: 264 },
-        { id: 'fifo', text: 'Async FIFO', x: 624, y: 256, hero: true },
+        { id: 'fifo', text: 'Async FIFO', short: 'FIFO', x: 624, y: 256, hero: true },
         { id: 'sync', text: 'Wptr', x: 548, y: 766 },
         { id: 'sync', text: 'Rptr', x: 1052, y: 766, align: 'right' },
         { text: 'Vertex domain', x: 136, y: 166, clock: 'w' },
         { text: 'Raster domain', x: 1464, y: 166, align: 'right', clock: 'r' },
-        { text: 'CDC boundary', x: 800, y: 166, align: 'center', cdc: true },
+        { text: 'CDC boundary', short: 'CDC', x: 800, y: 166, align: 'center', cdc: true },
       ],
       clockW: 78, clockH: 11,
       keepouts: [[532, 640, 536, 146]],
@@ -273,7 +273,7 @@
       ],
     },
     port: {
-      W: 800, H: 1000, portrait: true, labelPx: 9, ptPx: 9,
+      W: 800, H: 1000, portrait: true, labelPx: 10, ptPx: 10,
       die: { x: 12, y: 12, w: 776, h: 976, r: 12 }, padStep: 32, rings: [44, 56],
       core: { x: 76, y: 76, w: 648, h: 848 },
       rowsY: [88, 916],
@@ -292,12 +292,12 @@
       labels: [
         { id: 'vertex', text: 'Vertex stage', x: 268, y: 110 },
         { id: 'raster', text: 'Rasterizer', x: 272, y: 704 },
-        { id: 'fifo', text: 'Async FIFO', x: 540, y: 392, hero: true },
+        { id: 'fifo', text: 'Async FIFO', short: 'FIFO', x: 540, y: 392, hero: true },
         { id: 'sync', text: 'Wptr', x: 104, y: 384 },
         { id: 'sync', text: 'Rptr', x: 104, y: 646 },
-        { text: 'Vertex domain', x: 540, y: 452, clock: 'w', below: true },
-        { text: 'CDC boundary', x: 540, y: 498, cdc: true },
-        { text: 'Raster domain', x: 540, y: 556, clock: 'r', below: true },
+        { text: 'Vertex domain', short: 'Vertex clk', x: 540, y: 452, clock: 'w', below: true },
+        { text: 'CDC boundary', short: 'CDC', x: 540, y: 498, cdc: true },
+        { text: 'Raster domain', short: 'Raster clk', x: 540, y: 556, clock: 'r', below: true },
       ],
       clockW: 72, clockH: 10,
       keepouts: [[96, 340, 620, 336]],
@@ -344,7 +344,8 @@
   const CSS = `
 .kvc-gpu{position:relative;width:100%;margin-inline:auto;font-family:${KV.font.sans};color:rgba(255,255,255,.96);-webkit-font-smoothing:antialiased}
 .kvc-gpu-stage{position:relative;width:100%;aspect-ratio:16/10}
-@media (max-width:47.99rem){.kvc-gpu-stage{aspect-ratio:4/5}}
+@media (max-width:47.99rem) and (orientation:portrait){.kvc-gpu-stage{aspect-ratio:4/5}}
+@media (orientation:landscape) and (max-height:32.49rem){.kvc-gpu{max-width:calc((100svh - 3.25rem - 2rem) * 1.6)}}
 .kvc-gpu-canvas{position:absolute;inset:0}
 .kvc-gpu-hits{position:absolute;inset:0}
 .kvc-gpu-hit{position:absolute;appearance:none;-webkit-appearance:none;background:transparent;border:0;margin:0;padding:0;border-radius:8px;color:inherit;font:inherit;cursor:default;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -367,7 +368,7 @@
 .kvc-gpu-play:focus-visible{outline:2px solid rgba(255,255,255,.9);outline-offset:3px}
 .kvc-gpu-play svg{width:.875rem;height:.875rem;display:block}
 .kvc-gpu-play[hidden]{display:none}
-.kvc-gpu-cap.kvc-gpu-cap{margin-top:1.5rem;text-align:center;font-family:${KV.font.sans};color:rgba(255,255,255,.96);-webkit-font-smoothing:antialiased}
+.kvc-gpu-cap.kvc-gpu-cap{container:kvc-gpu-cap/inline-size;margin-top:1.5rem;text-align:center;font-family:${KV.font.sans};color:rgba(255,255,255,.96);-webkit-font-smoothing:antialiased}
 .kvc-gpu-cap p{margin-bottom:0}
 .kvc-gpu-flow{margin:0 auto;max-width:40rem;font-size:clamp(1rem,1.1vw,1.0625rem);font-weight:500;line-height:1.45;letter-spacing:-.005em;color:rgba(255,255,255,.8);text-wrap:balance}
 .kvc-gpu-flow .kvc-gpu-arw{color:rgba(255,255,255,.46);padding-inline:.35em}
@@ -382,6 +383,9 @@
 .kvc-gpu-meta{margin:.625rem auto 0;font-family:${KV.font.mono};font-size:.8125rem;line-height:1.45;letter-spacing:.02em;color:rgba(255,255,255,.54);text-wrap:balance}
 .kvc-gpu-nw{white-space:nowrap}
 @media (max-width:22rem){.kvc-gpu-nw,.kvc-gpu-step{white-space:normal}}
+/* Container rems follow the reader's text size (a media query's don't). */
+@container kvc-gpu-cap (max-width:24rem){.kvc-gpu-nw,.kvc-gpu-step{white-space:normal}}
+@media (pointer:coarse){.kvc-gpu-note{font-size:.75rem}}
 .kvc-gpu-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.kvc-gpu-tip{transition:opacity .15s ease;transform:none}.kvc-gpu-play{display:none}}
 @media (prefers-reduced-transparency:reduce){.kvc-gpu-tip{background:#1c1c1e;-webkit-backdrop-filter:none;backdrop-filter:none}.kvc-gpu-play{background:#2c2c2e;-webkit-backdrop-filter:none;backdrop-filter:none}}
@@ -746,13 +750,14 @@
       G.clocks.length = 0;
       for (const lb of L.labels) {
         if (lb.cdc) continue;
-        const color = hc ? P.ink2 : lb.hero ? P.ink2 : W1(0.46);
-        KV.label(c, lb.text, lb.x * s, lb.y * s, { size: L.labelPx, color, align: lb.align || 'left' });
+        const color = hc ? P.ink2 : lb.hero ? P.ink2 : W1(0.54);
+        const f = labOf(lb);
+        KV.label(c, f.text, lb.x * s, lb.y * s, { size: L.labelPx, color, align: lb.align || 'left', tracking: f.tracking });
         if (lb.clock) {
           c.save();
           c.font = `500 ${L.labelPx}px ${KV.font.mono}`;
-          if ('letterSpacing' in c) c.letterSpacing = `${(L.labelPx * 0.08).toFixed(2)}px`;
-          const wpx = c.measureText(lb.text.toUpperCase()).width / s;
+          if ('letterSpacing' in c) c.letterSpacing = `${(L.labelPx * f.tracking).toFixed(2)}px`;
+          const wpx = c.measureText(f.text.toUpperCase()).width / s;
           c.restore();
           const cw = L.clockW, ch = L.clockH;
           let x, y;
@@ -789,11 +794,15 @@
       cssSpace(c);
       for (const lb of L.labels) {
         if (!lb.cdc) continue;
-        KV.label(c, lb.text, lb.x * s, lb.y * s, { size: L.labelPx, color: hc ? P.ink2 : P.ink3, align: lb.align || 'left' });
+        const f = labOf(lb);
+        KV.label(c, f.text, lb.x * s, lb.y * s, { size: L.labelPx, color: hc ? P.ink2 : P.ink3, align: lb.align || 'left', tracking: f.tracking });
       }
     }
 
+    const drop = (c) => { if (c) { c.width = 0; c.height = 0; } };
     function buildStatic() {
+      if (introLayers) introLayers.forEach(drop);
+      drop(staticCv);
       if (introQ < 1) {
         introLayers = [drawBase, drawCells, drawBlocks, drawCdc].map((fn) => {
           const l = newLayer(); fn(l.getContext('2d')); return l;
@@ -811,7 +820,7 @@
       if (!introLayers) return;
       staticCv = newLayer();
       const c = staticCv.getContext('2d');
-      for (const l of introLayers) c.drawImage(l, 0, 0);
+      for (const l of introLayers) { c.drawImage(l, 0, 0); drop(l); }
       introLayers = null;
     }
 
@@ -933,11 +942,11 @@
 
     const stillFrame = () => reducedMQ.matches && !pinned;
 
-    function ctxLabel(text, x, y, { align = 'left', alpha = 1, color, size } = {}) {
+    function ctxLabel(text, x, y, { align = 'left', alpha = 1, color, size, tracking = 0.08 } = {}) {
       ctx.save();
       cssSpace(ctx);
       ctx.globalAlpha *= alpha;
-      KV.label(ctx, text, x * s, y * s, { size: size || L.ptPx, color: color || (hc ? P.ink2 : P.ink3), align });
+      KV.label(ctx, text, x * s, y * s, { size: size || L.ptPx, color: color || (hc ? P.ink2 : P.ink3), align, tracking });
       ctx.restore();
     }
 
@@ -1194,7 +1203,8 @@
       KV.roundRect(ctx, b.x - 6, b.y - 6, b.w + 12, b.h + 12, 9);
       ctx.lineWidth = px(1); ctx.strokeStyle = W1(0.32 * h); ctx.stroke();
       for (const lb of L.labels) if (lb.id === best) {
-        ctxLabel(lb.text, lb.x, lb.y, { align: lb.align || 'left', color: W1(0.52 + 0.44 * h), size: L.labelPx });
+        const f = labOf(lb);
+        ctxLabel(f.text, lb.x, lb.y, { align: lb.align || 'left', color: W1(0.52 + 0.44 * h), size: L.labelPx, tracking: f.tracking });
       }
     }
 
@@ -1261,6 +1271,49 @@
       drawHighlight();
     }
 
+    // ── Label fit ──────────────────────────────────────────
+    // At phone sizes the full names don't fit at a legible size: in
+    // portrait they sit in the narrow band between the FIFO and the core's
+    // edge; in a small landscape die the hero crowds the CDC line and the
+    // top row runs together. So labels tighten their tracking, then use a
+    // short form — the type never shrinks below labelPx.
+    const fits = new Map();
+    function fitLabels() {
+      fits.clear();
+      const c = cv.ctx;
+      const width = (t, tr) => {
+        c.save();
+        c.font = `500 ${L.labelPx}px ${KV.font.mono}`;
+        if ('letterSpacing' in c) c.letterSpacing = `${(L.labelPx * tr).toFixed(2)}px`;
+        const w = c.measureText(t.toUpperCase()).width;
+        c.restore();
+        return w;
+      };
+      const fit = (lb, room) => {
+        const tries = [[lb.text, 0.08], [lb.text, 0.03], [lb.short, 0.08], [lb.short, 0.03]];
+        const ok = tries.find(([t, tr]) => t && width(t, tr) <= room) || [lb.short || lb.text, 0.03];
+        if (ok[0] !== lb.text || ok[1] !== 0.08) fits.set(lb, { text: ok[0], tracking: ok[1] });
+      };
+      if (L.portrait) {
+        const edge = (L.core.x + L.core.w - 8) * s;
+        for (const lb of L.labels) if ((lb.align || 'left') === 'left') fit(lb, edge - lb.x * s);
+        return;
+      }
+      const hero = L.labels.find((lb) => lb.hero);
+      fit(hero, (L.cdc[0][0] - 14 - hero.x) * s);
+      const row = L.labels.filter((lb) => lb.clock || lb.cdc);
+      const ends = row.filter((lb) => lb.clock);
+      const span = (ends[1].x - ends[0].x) * s - 2 * (L.clockW + 16) * s - 2 * 16;
+      for (const [tr, short] of [[0.08, false], [0.03, false], [0.03, true]]) {
+        const tx = (lb) => (short && lb.short) || lb.text;
+        if (row.reduce((a, lb) => a + width(tx(lb), tr), 0) <= span || short) {
+          if (tr !== 0.08 || short) for (const lb of row) fits.set(lb, { text: tx(lb), tracking: tr });
+          break;
+        }
+      }
+    }
+    const labOf = (lb) => fits.get(lb) || { text: lb.text, tracking: 0.08 };
+
     // ── Sizing ─────────────────────────────────────────────
     function resize(o) {
       if (dead) return;
@@ -1268,6 +1321,7 @@
       const changed = next !== L || !G;
       L = next;
       s = o.w / L.W;
+      fitLabels();
       if (changed) deriveGeometry();
       buildStatic();
       placeHits();

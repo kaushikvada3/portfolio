@@ -1596,19 +1596,28 @@
     camera.updateProjectionMatrix();
     try { await renderer.compileAsync(scene, camera); } catch (e) { /* falls back to compiling on first render */ }
     for (const t of [lidColT, lidDatT, subColT, subDatT, shT, dieT]) renderer.initTexture(t);
+    // The GPU has its copies now; free the 2D sources (~17 MB at 1024²).
+    // A lost context is never restored in place — the chip is rebuilt.
+    for (const c of [lidCol, lidDat, subCol, subDat, shC]) { c.width = 0; c.height = 0; }
 
     const api = {
       el: canvas, kind: 'webgl', resize, render, onLost: null,
-      setDie(c) { if (c && dieT.image !== c) { dieT.image = c; dieT.needsUpdate = true; } },
+      setDie(c) {
+        if (!c || dieT.image === c) return;
+        // A resized die needs new GPU storage, not an update in place.
+        if (dieT.image && (dieT.image.width !== c.width || dieT.image.height !== c.height)) dieT.dispose();
+        dieT.image = c; dieT.needsUpdate = true;
+      },
       dispose() {
         trash.forEach((x) => x.dispose && x.dispose());
         envRT.dispose();
         renderer.dispose();
-        renderer.forceContextLoss();
+        if (!lost) renderer.forceContextLoss();
         canvas.remove();
       },
     };
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); api.onLost && api.onLost(); });
+    let lost = false;
+    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); lost = true; api.onLost && api.onLost(); });
     return api;
   }
 
@@ -1695,16 +1704,20 @@
         shadeEl.style.opacity = shade.toFixed(3);
         sheenEl.style.transform = `translateX(${(lerp(-10, 240, r.sw) + tx * 12).toFixed(1)}%) skewX(-16deg)`;
       },
-      dispose() { root.remove(); },
+      // WebKit frees canvas memory late; zero the faces so it goes now.
+      dispose() { for (const c of [lidC, subC, dieC]) { c.width = 0; c.height = 0; } root.remove(); },
     };
   }
 
   // ── Styles ─────────────────────────────────────────────────
   const CSS = `
 .${NS}{position:relative;height:var(--kvc-story-h,700vh)}
-@media (max-width:47.99rem){.${NS}{height:var(--kvc-story-hm,600vh)}}
+@media (max-width:47.99rem),(max-height:32.49rem){.${NS}{height:var(--kvc-story-hm,600vh)}}
 .${NS}.${NS}-static{height:auto}
-.${NS}-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:#000;color:rgba(255,255,255,.96);font-family:${FONT.sans};-webkit-font-smoothing:antialiased;--kvc-g:max(1rem,5vw)}
+.${NS}-stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;background:#000;color:rgba(255,255,255,.96);font-family:${FONT.sans};-webkit-font-smoothing:antialiased;
+  --kvc-sat:env(safe-area-inset-top,0px);--kvc-sar:env(safe-area-inset-right,0px);--kvc-sab:env(safe-area-inset-bottom,0px);--kvc-sal:env(safe-area-inset-left,0px);
+  --kvc-g:max(1rem,5vw,calc(var(--kvc-sal) + 1rem),calc(var(--kvc-sar) + 1rem))}
+.${NS}-safe{position:absolute;left:0;top:0;width:0;height:0;padding:var(--kvc-sat) var(--kvc-sar) var(--kvc-sab) var(--kvc-sal);box-sizing:content-box;visibility:hidden;pointer-events:none}
 .${NS}-viz{position:absolute;inset:0}
 .${NS}-diebox{position:absolute;left:0;top:0;visibility:hidden}
 .${NS}-gl{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -1765,11 +1778,15 @@
 .${NS}-rm-finale .${NS}-line{font-size:clamp(2.25rem,4.6vw,4rem);font-weight:700;line-height:1;letter-spacing:-.04em}
 .${NS}-note.is-static{position:static;margin-top:2rem;opacity:1;white-space:normal;text-align:left;transform:none}
 @media (max-width:63.99rem){.${NS}-rm-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:47.99rem){
-.${NS}-step{width:2.75rem}
-.${NS}-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.${NS}-rm-grid{grid-template-columns:minmax(0,1fr);gap:3rem}
-}
+@media (max-width:47.99rem){.${NS}-rm-grid{grid-template-columns:minmax(0,1fr);gap:3rem}}
+.${NS}-stage.is-compact .${NS}-step{width:min(2.75rem,calc((100vw - 2rem) / 6 - .25rem))}
+.${NS}-stage.is-compact .${NS}-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.${NS}-stage.is-split .${NS}-caps{right:auto;padding:0;justify-items:start;text-align:left}
+.${NS}-stage.is-split .${NS}-cap{max-width:none}
+.${NS}-stage.is-split .${NS}-nav{transform:none}
+.${NS}-stage.is-tight .${NS}-line{font-size:1.25rem}
+.${NS}-stage.is-tight .${NS}-cap.is-finale .${NS}-line{font-size:2rem}
+@media (pointer:coarse){.${NS}-note,.${NS}-name{font-size:.75rem}}
 @media (prefers-contrast:more){
 .${NS}-eyebrow{color:rgba(255,255,255,.8)}
 .${NS}-name{color:rgba(255,255,255,.7)}
@@ -1793,15 +1810,54 @@
     + 'Not an actual layout.';
 
   // ── Layout (resize only) ───────────────────────────────────
-  function computeLayout(W, H, capH, o) {
-    const mobile = W < 768;
-    const g = mobile ? 16 : Math.max(16, Math.round(W * 0.05));
-    const top = o.topInset + (mobile ? 16 : 48);
-    const navH = 44, bottom = mobile ? 12 : 24;
-    const gapCap = mobile ? 36 : 40, gapNav = mobile ? 16 : 24;
+  // ins: the stage's safe-area insets; navW: the step bar's width.
+  // Portrait and desktop stack die → caption → steps as one centered
+  // cluster. A short landscape screen (a phone on its side) can't fit that
+  // stack, so the die takes the full height on the left and the caption and
+  // steps sit beside it — Apple's landscape product-page pattern.
+  const NOTE_H = 18;
+  const layoutMode = (W, H) => {
+    const short = H < 520;
+    return { short, mobile: W < 768 || short, split: short && W >= 320 && W / H > 1.1 };
+  };
+  function computeLayout(W, H, capH, o, ins = { t: 0, r: 0, b: 0, l: 0 }, navW = 284) {
+    const { short, mobile, split } = layoutMode(W, H);
+    const side = Math.max(ins.l, ins.r);
+    const navH = 44;
+    if (split) {
+      const g = Math.max(16, Math.round(W * 0.05), side + 16);
+      const top = o.topInset + ins.t + 12, bottom = ins.b + 12;
+      // Too narrow to hold the steps beside the die (a flip phone's cover
+      // screen): they run along the foot of the stage instead.
+      const below = W - 2 * g - Math.max(32, g) - navW < 200;
+      const gapNav = below ? 12 : 20, gap = below ? 20 : Math.max(32, g);
+      const textW = Math.round(below ? (W - 2 * g - gap) * 0.5 : Math.min(380, Math.max(navW, (W - 2 * g - gap) * 0.4)));
+      const availH = H - top - bottom - (below ? navH + gapNav : 0);
+      let dw = Math.min(W - 2 * g - gap - textW, availH * ASPECT);
+      dw = Math.max(80, Math.floor(dw / 5) * 5);
+      const dh = dw / ASPECT;
+      const x0 = Math.round((W - (dw + gap + textW)) / 2);
+      const die = { x: x0, y: Math.round(top + (availH - dh) / 2), w: dw, h: dh };
+      const textX = x0 + dw + gap;
+      const block = below ? capH : capH + gapNav + navH;
+      const capTop = Math.round(Math.max(top, Math.min(top + availH - block, die.y + dh / 2 - block / 2)));
+      const navTop = below ? H - bottom - navH : capTop + capH + gapNav;
+      return {
+        W, H, mobile, short, split, g, die, capTop, navTop, top,
+        caps: { x: textX, w: textW }, navX: below ? Math.round((W - navW) / 2) : textX - 6,
+        note: { x: textX, y: Math.round(Math.min(top + availH - NOTE_H, Math.max(die.y + dh - NOTE_H, capTop + capH + 12))), align: 'left' },
+        chip: { x: Math.round(x0 - gap / 2), y: top, w: Math.round(dw + gap), h: availH },
+      };
+    }
+    const g = Math.max(mobile ? 16 : Math.max(16, Math.round(W * 0.05)), side + 16);
+    const top = o.topInset + ins.t + (short ? 12 : mobile ? 16 : 48);
+    const bottom = ins.b + (short ? 10 : mobile ? 12 : 24);
+    // The gap under the die holds the "Illustration" note, right-aligned to
+    // the die's edge, so it never sits on the centered caption's axis.
+    const gapCap = short ? 30 : mobile ? 44 : 40, gapNav = short ? 10 : mobile ? 16 : 24;
     const avail = H - bottom - top;
     const maxW = Math.min(W - 2 * g, 1200);
-    const maxH = Math.max(120, avail - navH - gapNav - capH - gapCap);
+    const maxH = Math.max(64, avail - navH - gapNav - capH - gapCap);
     let dw = maxW, dh = dw / ASPECT;
     if (dh > maxH) { dh = maxH; dw = dh * ASPECT; }
     dw = Math.max(80, Math.round(dw / 5) * 5);
@@ -1812,15 +1868,22 @@
     const y0 = Math.round(top + Math.max(0, (avail - cluster) / 2));
     const die = { x: Math.round((W - dw) / 2), y: y0, w: dw, h: dh };
     const capTop = Math.round(die.y + dh + gapCap);
-    const navTop = Math.round(capTop + capH + gapNav);
+    // The steps never leave the stage, even when nothing else fits.
+    const navTop = Math.min(H - bottom - navH, Math.round(capTop + capH + gapNav));
     return {
-      W, H, mobile, g, die, capTop, navTop, top,
+      W, H, mobile, short, split, g, die, capTop, navTop, top,
+      caps: null, navX: null,
+      // On a very short screen the gap is too tight to hold it: it moves out
+      // to the stage's right edge, level with the die's foot.
+      note: short
+        ? { x: W - g, y: Math.round(die.y + dh - NOTE_H), align: 'right' }
+        : { x: die.x + dw, y: Math.round(die.y + dh + Math.min(8, (gapCap - NOTE_H) / 2)), align: 'right' },
       chip: { x: 0, y: top, w: W, h: Math.max(100, capTop - gapCap - top) },
     };
   }
 
   // ── Scrubbed view ──────────────────────────────────────────
-  function scrubView(section, o, getP) {
+  function scrubView(section, o, getP, shared) {
     section.classList.remove(`${NS}-static`);
     const stage = document.createElement('div');
     stage.className = `${NS}-stage`;
@@ -1835,8 +1898,10 @@
           <li><button type="button" class="${NS}-step" aria-label="Stage ${i + 1} of 6: ${s.name}"><span class="${NS}-bar"><span class="${NS}-fill"></span></span><span class="${NS}-name" aria-hidden="true">${s.name}</span></button></li>`).join('')}
         </ol>
       </nav>
-      <p class="${NS}-note" aria-hidden="true">Illustration</p>`;
+      <p class="${NS}-note" aria-hidden="true">Illustration</p>
+      <div class="${NS}-safe" aria-hidden="true"></div>`;
     section.appendChild(stage);
+    shared.stage = stage;
 
     const viz = stage.querySelector(`.${NS}-viz`);
     const dieBox = stage.querySelector(`.${NS}-diebox`);
@@ -1847,6 +1912,7 @@
     const fills = steps.map((b) => b.querySelector(`.${NS}-fill`));
     const readout = stage.querySelector(`.${NS}-readout`);
     const note = stage.querySelector(`.${NS}-note`);
+    const safe = stage.querySelector(`.${NS}-safe`);
 
     let alive = true, visible = false, warmed = false, L = null, model = null, rend = null, die = null;
     let chip = null, lastP = -1, dirty = true, raf = 0, navOff = null, enter = 1, exit = 0, noteA = -1;
@@ -1956,15 +2022,31 @@
       if (die) { rend.setSize(die.w, die.h, die.dpr); rend.onRebuild(); }
     }
 
+    function insets() {
+      const cs = getComputedStyle(safe), n = (v) => parseFloat(v) || 0;
+      return { t: n(cs.paddingTop), r: n(cs.paddingRight), b: n(cs.paddingBottom), l: n(cs.paddingLeft) };
+    }
+
     function layout() {
       const W = stage.clientWidth, H = stage.clientHeight;
       if (!W || !H) return;
+      shared.vh = H;
+      const m = layoutMode(W, H);
+      if (stage.classList.contains('is-compact') !== m.mobile) stage.classList.toggle('is-compact', m.mobile);
+      if (stage.classList.contains('is-split') !== m.split) stage.classList.toggle('is-split', m.split);
+      stage.classList.toggle('is-tight', m.short && H < 360);
+      const ins = insets(), navW = nav.offsetWidth || 284;
+      // The caption column's width sets its height, so place it first.
+      const L0 = computeLayout(W, H, 0, o, ins, navW);
+      if (L0.caps) { capsBox.style.left = `${L0.caps.x}px`; capsBox.style.width = `${L0.caps.w}px`; } else { capsBox.style.left = ''; capsBox.style.width = ''; }
       const capH = Math.max(...caps.map((c) => c.offsetHeight));
-      L = computeLayout(W, H, capH, o);
+      L = computeLayout(W, H, capH, o, ins, navW);
       dieBox.style.cssText = `left:${L.die.x}px;top:${L.die.y}px;width:${L.die.w}px;height:${L.die.h}px;visibility:${vis.get(dieBox) ? 'visible' : 'hidden'}`;
       capsBox.style.top = `${L.capTop}px`;
       nav.style.top = `${L.navTop}px`;
-      note.style.transform = `translate3d(${L.die.x}px,${L.die.y + L.die.h + 12}px,0)`;
+      nav.style.left = L.navX == null ? '' : `${L.navX}px`;
+      const nx = L.note.align === 'right' ? L.note.x - note.offsetWidth : L.note.x;
+      note.style.transform = `translate3d(${Math.round(nx)}px,${L.note.y}px,0)`;
       if (warmed) ensureRenderer();
       if (chip) { chip.resize(L); if (rend && rend.finalCanvas) chip.setDie(rend.finalCanvas); }
       fading && fading.resize(L);
@@ -2004,18 +2086,45 @@
       chip && chip.setDie(rend.finalCanvas);
       if (!chip) setChip(createCSSChip(viz));
       if (o.mode === 'css' || !hasWebGL()) { resolveReady('css'); return; }
+      loadGL(true);
+    }
+
+    // WebGL can be lost at any time (iOS drops contexts for backgrounded
+    // tabs; Android resets its GPU process). The CSS chip steps in at once,
+    // the dead renderer is freed, and WebGL is tried again when the page is
+    // next visible — twice at most, so a device that keeps losing contexts
+    // settles on the CSS chip.
+    let glTries = 0, glTimer = 0, glWait = null;
+    function loadGL(first) {
       createGLChip(viz, rend.finalCanvas, { small: L.mobile }).then((gl) => {
         if (!alive) { gl.dispose(); return; }
         gl.onLost = () => {
-          if (chip !== gl) return;
-          setChip(createCSSChip(viz));
+          if (!alive || (chip !== gl && fading !== gl)) return;
+          if (fading === gl) fading = null;
+          if (chip === gl) { chip = null; setChip(createCSSChip(viz)); }
+          gl.dispose();
+          retryGL();
         };
         setChip(gl);
-        resolveReady('webgl');
+        if (first) resolveReady('webgl');
       }).catch((err) => {
+        if (!first) return;
         console.info('KVChip.Story: using the CSS chip —', (err && err.message) || err);
         resolveReady('css');
       });
+    }
+    function retryGL() {
+      if (glTries >= 2 || glWait) return;
+      glTries++;
+      glWait = () => {
+        if (!alive || document.hidden) return;
+        document.removeEventListener('visibilitychange', glWait);
+        clearTimeout(glTimer);
+        glWait = null;
+        if (chip && chip.kind === 'css') loadGL(false);
+      };
+      document.addEventListener('visibilitychange', glWait);
+      glTimer = setTimeout(glWait, 1500);
     }
 
     const onMove = (e) => {
@@ -2031,7 +2140,7 @@
 
     function jump(i) {
       const r = section.getBoundingClientRect();
-      const span = r.height - window.innerHeight;
+      const span = r.height - (shared.vh || window.innerHeight);
       window.scrollTo({ top: window.scrollY + r.top + (T.flow + (i + HERO[i]) * T.len) * span, behavior: 'smooth' });
     }
     steps.forEach((b, i) => b.addEventListener('click', () => jump(i)));
@@ -2046,8 +2155,12 @@
     io.observe(section);
     const ioNear = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) warm(); }, { rootMargin: '150% 0px 150% 0px' });
     ioNear.observe(section);
+    // Captions reflow on font load or a text-size change: re-place them too.
     const ro = new ResizeObserver(() => layout());
     ro.observe(stage);
+    let capRaf = 0;
+    const roCaps = new ResizeObserver(() => { if (!capRaf) capRaf = requestAnimationFrame(() => { capRaf = 0; if (alive) layout(); }); });
+    caps.forEach((c) => roCaps.observe(c));
     layout();
 
     return {
@@ -2060,12 +2173,15 @@
       destroy() {
         alive = false;
         cancelAnimationFrame(raf);
+        clearTimeout(glTimer);
+        if (glWait) document.removeEventListener('visibilitychange', glWait);
         tilt.stop(); swap.stop();
-        io.disconnect(); ioNear.disconnect(); ro.disconnect();
+        io.disconnect(); ioNear.disconnect(); ro.disconnect(); roCaps.disconnect(); cancelAnimationFrame(capRaf);
         stage.removeEventListener('pointermove', onMove);
         stage.removeEventListener('pointerleave', onLeave);
         chip && chip.dispose(); fading && fading.dispose();
         rend && rend.dispose();
+        if (shared.stage === stage) shared.stage = null;
         stage.remove();
       },
     };
@@ -2171,26 +2287,41 @@
   // onEdge(enter, exit): enter rises to 1 as the stage pins; exit rises from
   // 0 over the first 30% of a viewport after it unpins. Both track the
   // scroll directly (no spring), since the stage itself moves with it.
-  function scrollProgress(section, onProgress, response, onEdge) {
-    let ein = -1, eout = -1, onscreen = true;
+  // stageH() is the pinned stage's height (100svh). Measuring against it,
+  // not innerHeight, keeps progress steady while a mobile toolbar shows and
+  // hides, and lands p = 1 exactly where the stage unpins.
+  // A rotation (or any resize) mid-story changes the section's height while
+  // scrollY stays put; the reader is moved to keep their place in the story.
+  function scrollProgress(section, onProgress, response, onEdge, stageH) {
+    let ein = -1, eout = -1, onscreen = true, lastP = NaN, lastH = 0;
     const raw = () => {
-      const r = section.getBoundingClientRect();
-      const vh = window.innerHeight, span = r.height - vh;
-      onscreen = r.bottom > 0 && r.top < vh;
+      let r = section.getBoundingClientRect();
+      const vh = stageH() || window.innerHeight;
+      // lastP strictly inside (0, 1): the reader was mid-story, pinned.
+      if (lastH && Math.abs(r.height - lastH) > 1 && lastP > 0 && lastP < 1) {
+        window.scrollTo({ top: window.scrollY + r.top + lastP * (r.height - vh), behavior: 'instant' });
+        r = section.getBoundingClientRect();
+      }
+      const span = r.height - vh;
+      onscreen = r.bottom > 0 && r.top < window.innerHeight;
       const a = Math.round(clamp01(1 - r.top / (0.25 * vh)) * 1000) / 1000;
       const b = span <= 0 ? 0 : Math.round(clamp01((-r.top - span) / (0.3 * vh)) * 1000) / 1000;
       if (a !== ein || b !== eout) { ein = a; eout = b; onEdge && onEdge(a, b); }
-      return span <= 0 ? (r.top <= 0 ? 1 : 0) : clamp01(-r.top / span);
+      const p = span <= 0 ? (r.top <= 0 ? 1 : 0) : clamp01(-r.top / span);
+      lastH = r.height; lastP = p;
+      return p;
     };
     const spring = new F.Spring(raw(), { dampingRatio: 1, response, precision: 0.0005, onUpdate: (v) => onProgress(v) });
     let near = true, target = NaN;
-    const update = () => {
+    const update = (e) => {
       if (!near) return;
+      const h0 = lastH;
       const v = raw();
       if (v === target) return;          // clamped at 0 or 1: nothing to do
       target = v;
-      // Off screen (e.g. after a cut past the story) there's nothing to ease.
-      if (K.reducedMotion || !onscreen) spring.set(v); else spring.to(v);
+      // Off screen (e.g. after a cut past the story) there's nothing to ease;
+      // after a relayout the picture holds rather than scrubbing.
+      if (K.reducedMotion || !onscreen || (e && e.type === 'resize') || Math.abs(lastH - h0) > 1) spring.set(v); else spring.to(v);
     };
     const io = new IntersectionObserver((es) => {
       near = es[es.length - 1].isIntersecting;
@@ -2217,6 +2348,7 @@
     if (!section) throw new Error('KVChip.Story.mount: a section element is required');
     injectStyle();
     const o = { topInset: 52, height: 700, mobileHeight: 600, pin: null, mode: 'auto', ...opts };
+    const shared = { vh: 0 };
     section.classList.add(NS);
     section.style.setProperty('--kvc-story-h', `${o.height}vh`);
     section.style.setProperty('--kvc-story-hm', `${o.mobileHeight}vh`);
@@ -2225,11 +2357,11 @@
     const rmq = matchMedia('(prefers-reduced-motion: reduce)');
     const sp = scrollProgress(section, (v) => {
       if (alive && view && view.onProgress && pin === null) view.onProgress(v);
-    }, 0.26, (a, b) => { if (alive && view && view.onEdge) view.onEdge(a, b); });
+    }, 0.26, (a, b) => { if (alive && view && view.onEdge) view.onEdge(a, b); }, () => (shared.stage ? shared.stage.offsetHeight : 0));
     const cur = () => (pin === null ? sp.value : pin);
     const build = () => {
       if (view) view.destroy();
-      view = rmq.matches ? staticView(section, o) : scrubView(section, o, cur);
+      view = rmq.matches ? staticView(section, o) : scrubView(section, o, cur, shared);
       if (view.onEdge) view.onEdge(...sp.edge);
     };
     build();

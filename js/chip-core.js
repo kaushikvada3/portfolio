@@ -147,10 +147,13 @@
   // damped spring that *follows* scroll — retargeted every scroll
   // event from its live value, so it's continuous and interruptible.
   // Under reduced motion the raw value is used directly.
-  function scrollProgress(section, onProgress, { response = 0.22 } = {}) {
+  // pin: the sticky element inside the section. Its height (e.g. 100svh)
+  // is the viewport the story plays in; innerHeight changes as a mobile
+  // toolbar shows and hides, so it's only the fallback.
+  function scrollProgress(section, onProgress, { response = 0.22, pin = null } = {}) {
     const raw = () => {
       const r = section.getBoundingClientRect();
-      const span = r.height - window.innerHeight;
+      const span = r.height - ((pin && pin.offsetHeight) || window.innerHeight);
       return span <= 0 ? (r.top <= 0 ? 1 : 0) : clamp01(-r.top / span);
     };
     const spring = new Fluid.Spring(raw(), {

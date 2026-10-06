@@ -7,18 +7,18 @@
 <meta name="description" content="Kaushik Vada — Physical Design Intern at Tenstorrent and Electrical Engineering student at UC Riverside. Static timing, power, and the path from RTL to GDS." />
 <meta name="author" content="Kaushik Vada" />
 <meta name="theme-color" content="#000000" />
-<link rel="canonical" href="https://kaushikvada3.github.io/portfolio/" />
+<link rel="canonical" href="https://kaushikvada.com/" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="Kaushik Vada — Physical Design" />
 <meta property="og:description" content="Physical Design Intern at Tenstorrent, previously Arm. Static timing, power, and the path from RTL to GDS." />
-<meta property="og:url" content="https://kaushikvada3.github.io/portfolio/" />
-<meta property="og:image" content="https://kaushikvada3.github.io/portfolio/og-image.png" />
+<meta property="og:url" content="https://kaushikvada.com/" />
+<meta property="og:image" content="https://kaushikvada.com/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Kaushik Vada — Physical Design" />
 <meta name="twitter:description" content="Physical Design Intern at Tenstorrent, previously Arm. Static timing, power, and the path from RTL to GDS." />
-<meta name="twitter:image" content="https://kaushikvada3.github.io/portfolio/og-image.png" />
+<meta name="twitter:image" content="https://kaushikvada.com/og-image.png" />
 <meta name="color-scheme" content="dark" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23fff' stroke-opacity='.9' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23E0B96C'/%3E%3C/svg%3E" />
 <script>document.documentElement.classList.add('js');</script>
@@ -39,14 +39,20 @@
     --gold: rgba(224, 185, 108, 1);       /* importance / active only */
 
     --material: rgba(16, 16, 18, 0.72);
-    --material-heavy: rgba(16, 16, 18, 0.9);
+    --material-heavy: rgba(16, 16, 18, 0.97);
     --scrim: rgba(0, 0, 0, 0.55);
 
     --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, "SF Mono", Menlo, monospace;
 
     --maxw: 75rem;
-    --gutter: max(1rem, 5vw);
+    /* Safe areas (viewport-fit=cover): a landscape iPhone's island or an
+       Android cutout sits in one side inset. The gutter clears the larger
+       of the two on both sides, so centred compositions stay centred. */
+    --sa-l: env(safe-area-inset-left, 0px);
+    --sa-r: env(safe-area-inset-right, 0px);
+    --sa-b: env(safe-area-inset-bottom, 0px);
+    --gutter: max(1rem, 5vw, calc(max(var(--sa-l), var(--sa-r)) + 1rem));
     --nav-h: 3.25rem;
     --bar-h: 0rem;
     --r-tile: 1.75rem;
@@ -76,6 +82,7 @@
     scroll-padding-top: calc(var(--nav-h) + 1rem);
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
   body {
     background: var(--bg);
@@ -89,6 +96,11 @@
     -moz-osx-font-smoothing: grayscale;
     overflow-x: clip;
   }
+  /* body's clip is handed to the viewport, and a phone browser still widens
+     its layout viewport to fit anything wider (zooming the page out). These
+     boxes keep their own clip, so nothing can widen the page. Clip, unlike
+     hidden, makes no scroll container: the sticky nav and story still pin. */
+  main, .localnav, .foot { overflow-x: clip; }
   ::selection { background: rgba(255, 255, 255, 0.24); }
   a { color: inherit; text-decoration: none; }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -137,7 +149,7 @@
     font-size: 0.75rem; letter-spacing: 0.01em; color: var(--ink-3);
     transition: color 0.2s ease;
   }
-  .globalbar a:hover { color: var(--ink-1); }
+  @media (hover: hover) { .globalbar a:hover { color: var(--ink-1); } }
   .globalbar a:first-child { margin-left: -0.25rem; }
   .globalbar a:last-child { margin-right: -0.25rem; }
 
@@ -170,7 +182,8 @@
     font-size: 0.75rem; letter-spacing: 0.01em; color: var(--ink-2);
     transition: color 0.2s ease;
   }
-  .ln-links a:hover, .ln-links a[aria-current="true"] { color: var(--ink-1); }
+  .ln-links a[aria-current="true"] { color: var(--ink-1); }
+  @media (hover: hover) { .ln-links a:hover { color: var(--ink-1); } }
   .ln-links a:focus-visible, .ln-title:focus-visible, .globalbar a:focus-visible { outline-offset: -0.375rem; border-radius: 0.625rem; }
   .ln-indicator {
     position: absolute; left: 0; bottom: 0; width: 1px; height: 2px;
@@ -186,7 +199,7 @@
     font-weight: 500; white-space: nowrap;
     transition: background-color 0.2s ease;
   }
-  .pill:hover { background: #fff; }
+  @media (hover: hover) { .pill:hover { background: #fff; } }
   .pill-sm { font-size: 0.75rem; padding: 0.3125rem 0.75rem; min-height: 1.75rem; margin-left: 0.5rem; }
   .pill-sm::before { content: ""; position: absolute; inset: -0.5rem -0.25rem; } /* 44px hit area */
   .ln-toggle {
@@ -201,9 +214,13 @@
   .ln-panel {
     pointer-events: auto;
     background: var(--material-heavy);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(30px);
+    backdrop-filter: saturate(180%) blur(30px);
     padding-bottom: 1rem;
+    /* A short landscape screen scrolls the rows, never the page behind. */
+    max-height: calc(100svh - var(--nav-h));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     transform: translate3d(0, -100%, 0);
   }
   .ln-panel[hidden] { display: none; }
@@ -216,13 +233,23 @@
   .ln-panel a[aria-current="true"] { color: var(--ink-1); font-weight: 600; }
   .ln-scrim {
     position: fixed; inset: 0; z-index: 40; background: var(--scrim); opacity: 0;
+    touch-action: none;   /* a drag on the scrim doesn't scroll the page under the menu */
   }
   .ln-scrim[hidden] { display: none; }
 
   @media (max-width: 47.99rem) {
     .ln-links, .ln-indicator { display: none; }
     .ln-toggle { display: inline-flex; }
-    .ln-right { gap: 0; }
+    .ln-right { gap: 0; flex: none; }
+    .ln-in { gap: 0.5rem; }
+    /* Scales with the screen as well as the text size, so the bar holds at
+       320px with larger text; the ellipsis is only a last resort. */
+    .ln-title {
+      display: block; line-height: 2.75rem;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis;
+      font-size: clamp(1rem, 5.4vw, 1.1875rem);
+    }
+    .pill-sm { margin-left: 0.25rem; }
   }
 
   /* ───────────────────────── Hero ───────────────────────── */
@@ -249,6 +276,7 @@
     line-height: 1.18;
     letter-spacing: -0.018em;
     color: var(--ink-2);
+    text-wrap: balance;
   }
   .hero-meta { margin-top: var(--s5); }
   .hero-meta .sep { opacity: 0.6; }
@@ -299,6 +327,7 @@
     line-height: 1.35;
     letter-spacing: -0.01em;
     color: var(--ink-2);
+    text-wrap: balance;
   }
   section[id] { scroll-margin-top: -1rem; }  /* lands flush under the nav */
   /* A jump across the pinned story cuts through black instead of scrubbing it. */
@@ -328,7 +357,9 @@
   }
   .tile {
     flex: 0 0 min(58rem, 100% - 3rem);
-    min-height: clamp(22rem, 54vh, 30rem);
+    min-width: 0;                      /* a long figure scales down; it never widens the tile */
+    container-type: inline-size;
+    min-height: clamp(18rem, 54svh, 30rem);
     display: flex; flex-direction: column; justify-content: space-between; gap: var(--s5);
     padding: clamp(1.5rem, 4vw, 3.5rem);
     background: var(--surface);
@@ -356,6 +387,7 @@
   .tile-note {
     max-width: 34em;
     font-size: 1rem; line-height: 1.5; color: var(--ink-body);
+    text-wrap: pretty;
   }
   .tile-note strong { color: var(--ink-2); font-weight: 600; }
   /* counting numbers: final value reserves width and stays in the a11y tree */
@@ -369,14 +401,16 @@
     margin-top: var(--s4);
     display: flex; align-items: center; justify-content: space-between;
   }
-  .dots { position: relative; display: flex; margin-left: -1.125rem; }
+  /* The first mark lines up with the text edge; on a 1rem gutter the hit
+     area stops at the screen edge instead of 2px past it. */
+  .dots { position: relative; display: flex; margin-left: calc(-1 * min(1.125rem, var(--gutter))); }
   .dot { width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; }
   .dot::before {
     content: ""; width: 0.5rem; height: 0.5rem; border-radius: 50%;
     background: var(--ink-dim);
     transition: background-color 0.2s ease;
   }
-  .dot:hover::before { background: var(--ink-3); }
+  @media (hover: hover) { .dot:hover::before { background: var(--ink-3); } }
   .dot-ind {
     position: absolute; left: 1.125rem; top: calc(50% - 0.25rem);
     width: 0.5rem; height: 0.5rem; border-radius: 50%;
@@ -389,7 +423,7 @@
     background: rgba(255, 255, 255, 0.1); color: var(--ink-1);
     transition: background-color 0.2s ease, opacity 0.2s ease;
   }
-  .paddle:hover { background: rgba(255, 255, 255, 0.16); }
+  @media (hover: hover) { .paddle:hover { background: rgba(255, 255, 255, 0.16); } }
   .paddle svg { width: 1.125rem; height: 1.125rem; }
   .paddle[aria-disabled="true"] { opacity: 0.32; cursor: default; }
   /* Without script the gallery is a plain horizontal scroller. */
@@ -437,6 +471,7 @@
     line-height: 1.12;
     letter-spacing: -0.025em;
     color: var(--ink-2);
+    text-wrap: pretty;
   }
   .points {
     margin-top: var(--s7);
@@ -449,6 +484,7 @@
     font-size: var(--fs-body);
     line-height: 1.5;
     color: var(--ink-body);
+    text-wrap: pretty;
   }
   .points strong { color: var(--ink-2); font-weight: 500; }
   /* Chapter visuals (KVChip.Tenstorrent / KVChip.Arm): lede → visual → bullets.
@@ -543,18 +579,18 @@
     font-size: var(--fs-body); color: var(--ink-2);
     transition: color 0.2s ease;
   }
-  .contact-links a:hover { color: var(--ink-1); }
+  @media (hover: hover) { .contact-links a:hover { color: var(--ink-1); } }
   .contact-links .icon { width: 0.8em; height: 0.8em; opacity: 0.7; }
 
   /* ───────────────────────── Footer ───────────────────────── */
-  .foot { padding-block: var(--s5) var(--s6); }
+  .foot { padding-block: var(--s5) max(var(--s6), calc(var(--sa-b) + var(--s4))); }
   .foot .wrap { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
   .foot nav ul { display: flex; flex-wrap: wrap; gap: 0 var(--s3); }
   .foot nav a {
     display: inline-flex; align-items: center; min-height: 2.75rem;
     font-size: 0.75rem; color: var(--ink-3); transition: color 0.2s ease;
   }
-  .foot nav a:hover { color: var(--ink-1); }
+  @media (hover: hover) { .foot nav a:hover { color: var(--ink-1); } }
 
   /* ───────────────────────── Responsive ───────────────────────── */
   @media (max-width: 63.99rem) {
@@ -582,6 +618,48 @@
   }
   @media (max-width: 29.99rem) {
     .skills-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* 320–359px (SE 1st gen, Fold and Flip covers): the three marks share one
+     row, and the metadata sets as three clean lines, never a dangling dot. */
+  @media (max-width: 22.49rem) {
+    .hero-logos { --lu: 1rem; gap: var(--s3) var(--s4); }
+    .hero-meta .sep { display: none; }
+    .hero-meta .nw { display: block; }
+  }
+  /* A figure scales with its tile as well as the type size, so the widest
+     one (18.4–19.5%, ~5.45em) fits at 320px or with larger text. */
+  @supports (width: 1cqi) {
+    .stat { font-size: min(var(--fs-stat), 17.5cqi); }
+    .stat-pair .stat { font-size: min(var(--fs-stat) * 0.82, 17.5cqi); }
+    @media (max-width: 47.99rem) {
+      .stat-pair .stat { font-size: min(var(--fs-stat), 17.5cqi); }
+    }
+    /* Side by side in short landscape: each figure (~2.9em) gets half a tile. */
+    @media (max-width: 47.99rem) and (orientation: landscape) and (max-height: 32.49rem) {
+      .stat-pair .stat { font-size: min(var(--fs-stat), 14cqi); }
+    }
+  }
+  /* Short screens (phones in landscape, flip covers): the visible area under
+     the nav is ~250–400px. The hero composes name, line, metadata and marks
+     in one view, the name on one line and still the largest thing on screen;
+     a figure tile is only as tall as its content. */
+  @media (orientation: landscape) and (max-height: 32.49rem) {
+    .hero { padding-block: var(--s5); }
+    .hero-title { font-size: min(12vw, 22svh); }
+    .hero-sub, .hero-meta { margin-top: var(--s3); }
+    .hero-logos { margin-top: var(--s4); }
+    /* Landscape has the width for the paired figures to sit side by side. */
+    .stat-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s5); }
+  }
+  /* Flip covers (~250px under the nav): the same composition, tighter. */
+  @media (orientation: landscape) and (max-height: 21rem) {
+    .hero { padding-block: var(--s3); }
+    .hero-logos { margin-top: var(--s3); }
+  }
+  @media (max-height: 32.49rem) {
+    .gallery { margin-top: var(--s5); }
+    .tile { min-height: 0; justify-content: flex-start; gap: var(--s4); padding: clamp(1.5rem, 3.5vw, 2rem); }
+    .tile-note { margin-top: auto; }
   }
 
   /* ───────────────────────── Accessibility preferences ───────────────────────── */
@@ -613,7 +691,8 @@
     .tile, .edu { box-shadow: inset 0 0 0 1px var(--hair); }
     .paddle { background: #000; box-shadow: inset 0 0 0 1px var(--hair); }
     .hero-logos a { opacity: 0.8; }
-    .hero-logos a:hover, .hero-logos a:focus-visible { opacity: 1; }
+    .hero-logos a:focus-visible { opacity: 1; }
+    @media (hover: hover) { .hero-logos a:hover { opacity: 1; } }
   }
 
   /* ───────────────────────── Print / Save as PDF ───────────────────────── */
@@ -1081,7 +1160,7 @@
   const chevron = $('svg', toggle);
   const panel = $('#ln-panel');
   const scrim = $('.ln-scrim');
-  let menuOpen = false;
+  let menuOpen = false, menuY = 0;
   const menu = new F.Spring(0, {
     dampingRatio: 1, response: 0.35, precision: 0.001,
     onUpdate: p => {
@@ -1099,6 +1178,7 @@
     toggle.setAttribute('aria-label', open ? 'Hide sections' : 'Show sections');
     nav.classList.toggle('menu-open', open);
     if (open) {
+      menuY = scrollY;
       panel.hidden = false; scrim.hidden = false;
       menu.to(1, { instant: reduced });
       if (focusIn) panelLinks[Math.max(0, active)].focus({ preventScroll: true });
@@ -1224,7 +1304,11 @@
         return Math.abs(x) < 0.01 ? 0 : x;
       });
       pitch = dots.length > 1 ? dots[1].offsetLeft - dots[0].offsetLeft : 44;
-      spring.set(snaps[index]);
+      // A throw still settling is retargeted, not teleported; a finger on
+      // the track keeps it (the release snaps to the new geometry).
+      if (drag && drag.locked) return;
+      if (spring.animating) spring.to(snaps[index]);
+      else spring.set(snaps[index]);
     }
     function reflect() {
       dots.forEach((d, i) => i === index ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current'));
@@ -1406,7 +1490,12 @@
     first = false;
   }
   let ticking = false;
-  const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+  const onScroll = () => {
+    // The page moving under the open menu closes it (the scrim already
+    // refuses drags; this catches a drag that starts on the bar).
+    if (menuOpen && Math.abs(scrollY - menuY) > 24) setMenu(false, { restore: false });
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  };
 
   let resizeRaf = 0;
   const relayout = () => {
@@ -1440,7 +1529,17 @@
   counters.forEach(c => countIO.observe(c.el));
 
   addEventListener('scroll', onScroll, { passive: true });
-  addEventListener('resize', relayout);
+  // iOS fires resize as its toolbar collapses and expands mid-scroll. Only
+  // the viewport height changes then (the svh layout doesn't), so that just
+  // updates L.vh instead of re-measuring the page and the gallery.
+  let lastW = innerWidth, lastH = innerHeight;
+  addEventListener('resize', () => {
+    const w = innerWidth, h = innerHeight;
+    const toolbar = w === lastW && Math.abs(h - lastH) < 120;
+    lastW = w; lastH = h;
+    if (toolbar) { L.vh = h; onScroll(); return; }
+    relayout();
+  });
   new ResizeObserver(relayout).observe(document.body);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
   F.onReducedMotionChange(v => { reduced = v; applyMotionMode(); });
@@ -1465,7 +1564,9 @@
     const target = id && document.getElementById(id);
     if (!target) return;
     const sr = storyEl.getBoundingClientRect();
-    const s0 = sr.top + scrollY, s1 = s0 + sr.height - innerHeight;
+    // The pinned stage is 100svh; innerHeight grows when the iOS toolbar hides.
+    const stage = storyEl.querySelector('.kvc-story-stage');
+    const s0 = sr.top + scrollY, s1 = s0 + sr.height - (stage ? stage.offsetHeight : innerHeight);
     const y0 = scrollY, y1 = target.getBoundingClientRect().top + scrollY;
     if (Math.min(y0, y1) >= s1 || Math.max(y0, y1) <= s0) return;
     e.preventDefault();

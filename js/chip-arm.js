@@ -212,9 +212,9 @@
 .kvc-arm-pair + .kvc-arm-ctx { margin-top: .875rem; }
 .kvc-arm-sr { position: absolute !important; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+@media (max-width: 47.99rem) and (orientation: portrait) { .kvc-arm-area { aspect-ratio: 1.45 / 1; } }
 @media (max-width: 47.99rem) {
   .kvc-arm-stage { border-radius: 1.25rem; }
-  .kvc-arm-area { aspect-ratio: 1.45 / 1; }
   .kvc-arm-long { display: none; }
   .kvc-arm-foot { padding: 0 1rem .875rem; font-size: .6875rem; }
   .kvc-arm-ramp { width: 3rem; }
@@ -223,7 +223,13 @@
   .kvc-arm-seg button { flex: 1 1 0; padding: 0 .5rem; min-height: 2.75rem; font-size: .9375rem; }
   .kvc-arm-readouts, .kvc-arm-readouts.is-all { grid-template-columns: minmax(0, 1fr); gap: 2rem; margin-top: 2rem; }
 }
-@media (pointer: coarse) { .kvc-arm-seg button { min-height: 2.75rem; } }
+@media (pointer: coarse) { .kvc-arm-seg button { min-height: 2.75rem; } .kvc-arm-note, .kvc-arm-foot, .kvc-arm-tip { font-size: .75rem; } }
+/* A phone on its side: the heatmap, its legend and the controls share one screen. */
+@media (orientation: landscape) and (max-height: 32.49rem) {
+  .kvc-arm-area { aspect-ratio: auto; height: calc(100svh - 10.25rem); min-height: 9rem; }
+  .kvc-arm-controls { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 1rem 1.5rem; margin-top: 1rem; }
+  .kvc-arm-group { flex: 1 1 15rem; }
+}
 @media (prefers-reduced-transparency: reduce) { .kvc-arm-tip { background: #18181b; } }
 @media (prefers-contrast: more) {
   .kvc-arm-seg { background: rgba(255,255,255,.14); }
@@ -512,7 +518,7 @@
         c.strokeRect(x, y, w, hh);
         c.fillStyle = 'rgba(255,255,255,0.08)';
         c.fillRect(x + 1, y, w - 1, 1);
-        if (labelAll) K.label(c, m.name, x + 8, y + 8, { size: L.bw > 600 ? 10 : 8, baseline: 'top', color: 'rgba(255,255,255,0.46)' });
+        if (labelAll) K.label(c, m.name, x + 8, y + 8, { size: 10, baseline: 'top', color: 'rgba(255,255,255,0.54)' });
       }
     }
 
