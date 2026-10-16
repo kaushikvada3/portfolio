@@ -15,3 +15,6 @@ dist/
 # Documents
 Kaushik Vada Resume.pdf
 Two-Level Cache.pdf
+
+# Unencrypted résumé — resume.pdf is the locked copy that ships
+resume.source.pdf
