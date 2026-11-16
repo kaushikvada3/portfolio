@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kaushik Vada</title>
+<meta name="description" content="Private portfolio. Enter the password to continue." />
+<meta name="author" content="Kaushik Vada" />
+<meta name="theme-color" content="#000000" />
+<meta name="color-scheme" content="dark" />
+<link rel="canonical" href="https://kaushikvada.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Kaushik Vada" />
+<meta property="og:description" content="Private portfolio." />
+<meta property="og:url" content="https://kaushikvada.com/" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23fff' stroke-opacity='.9' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23E0B96C'/%3E%3C/svg%3E" />
+<!-- Already unlocked in this tab: keep the form out of sight while the page decrypts. -->
+<script>try { if (sessionStorage.getItem('kv-key')) document.documentElement.classList.add('is-returning'); } catch (e) {}</script>
+<style>
+  /* The lock screen is the hero with a password field where the tagline goes:
+     same name, same size, same tiers, so unlocking reads as one page opening. */
+  :root {
+    color-scheme: dark;
+    --ink-1: rgba(255, 255, 255, 0.96);
+    --ink-2: rgba(255, 255, 255, 0.80);
+    --ink-3: rgba(255, 255, 255, 0.54);
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, monospace;
+    --sa-l: env(safe-area-inset-left, 0px);
+    --sa-r: env(safe-area-inset-right, 0px);
+    --gutter: max(1rem, 5vw, calc(max(var(--sa-l), var(--sa-r)) + 1rem));
+    --s3: 1rem; --s4: 1.5rem; --s5: 2rem; --s6: 3rem;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: #000; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: #000; color: var(--ink-1);
+    font-family: var(--sans); font-size: 1rem; line-height: 1.5;
+    font-optical-sizing: auto; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+  ::selection { background: rgba(255, 255, 255, 0.24); }
+  .sr-only {
+    position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  .gate {
+    min-height: 100vh; min-height: 100svh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: var(--s6) var(--gutter);
+    text-align: center;
+    transition: opacity 0.2s ease;
+  }
+  .is-leaving .gate { opacity: 0; }
+  .is-returning .gate { visibility: hidden; }
+
+  .name {
+    font-size: clamp(3.75rem, 11vw, 10.5rem);
+    font-weight: 700; line-height: 0.92; letter-spacing: -0.045em;
+    color: var(--ink-1);
+  }
+  .name span { display: inline-block; }
+
+  form { width: 100%; }
+  .field { position: relative; width: min(20rem, 100%); margin: var(--s6) auto 0; }
+  .field input {
+    display: block; width: 100%; height: 3rem;
+    padding: 0 3.5rem 0 1.25rem;
+    border: 0; border-radius: 980px;
+    background: rgba(255, 255, 255, 0.10); color: var(--ink-1);
+    font: 400 1.0625rem/1.2 var(--sans);   /* 17px: under 16px iOS zooms the page on focus */
+    caret-color: var(--ink-1);
+    outline: none;
+    -webkit-appearance: none; appearance: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field input::placeholder { color: var(--ink-3); opacity: 1; }
+  .field input:focus { background: rgba(255, 255, 255, 0.13); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
+  /* A saved password would otherwise repaint the field in the browser's own colours. */
+  .field input:-webkit-autofill {
+    -webkit-text-fill-color: #fff; caret-color: #fff;
+    -webkit-box-shadow: inset 0 0 0 3rem #1c1c1e;
+  }
+
+  .field button {
+    position: absolute; right: 0.375rem; top: 50%; margin-top: -1.125rem;
+    width: 2.25rem; height: 2.25rem;
+    display: grid; place-items: center;
+    border: 0; border-radius: 50%;
+    background: var(--ink-1); color: #000;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.1s ease-out;
+  }
+  .field button::before { content: ""; position: absolute; inset: -0.25rem; }   /* 44px hit area */
+  .field button svg { display: block; width: 1rem; height: 1rem; }
+  .field button:active { transform: scale(0.94); }
+  .field button:focus-visible { outline: 2px solid rgba(255, 255, 255, 0.92); outline-offset: 3px; }
+  /* Nothing typed yet: the arrow waits, as it does on the Mac login window. */
+  .field input:placeholder-shown + button { opacity: 0.28; }
+
+  .is-busy .field button svg { display: none; }
+  .is-busy .field button::after {
+    content: ""; width: 1rem; height: 1rem; border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.22); border-top-color: #000;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .is-wrong { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-8px); }
+    40%, 60% { transform: translateX(8px); }
+  }
+
+  .status {
+    margin-top: var(--s3);
+    font-family: var(--mono); font-size: 0.8125rem; line-height: 1.45; letter-spacing: 0.02em;
+    color: var(--ink-3);
+    transition: color 0.2s ease;
+  }
+  .status.is-error { color: var(--ink-2); }
+
+  @media (max-width: 47.99rem) {
+    .name { font-size: min(23vw, 7rem); }
+    .field { margin-top: var(--s5); }
+  }
+  /* Phones in landscape, flip covers: name, field and line still fit one view. */
+  @media (orientation: landscape) and (max-height: 32.49rem) {
+    .gate { padding-block: var(--s4); }
+    .name { font-size: min(12vw, 22svh); }
+    .field { margin-top: var(--s4); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .is-wrong { animation: none; }
+    .is-busy .field button { opacity: 0.5; }
+    .is-busy .field button svg { display: block; }
+    .is-busy .field button::after { display: none; }
+  }
+  @media (prefers-contrast: more) {
+    :root { --ink-2: rgba(255, 255, 255, 0.94); --ink-3: rgba(255, 255, 255, 0.8); }
+    .field input { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5); }
+    .field input:focus { box-shadow: inset 0 0 0 2px #fff; }
+  }
+</style>
+<noscript><style>.field { display: none; }</style></noscript>
+</head>
+<body>
+<main class="gate">
+  <h1 class="name"><span>Kaushik</span> <span>Vada.</span></h1>
+  <form id="unlock">
+    <div class="field">
+      <label class="sr-only" for="pw">Password</label>
+      <input id="pw" name="password" type="password" placeholder="Password" autocomplete="current-password"
+             autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" required autofocus />
+      <button type="submit" aria-label="Unlock">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+      </button>
+    </div>
+    <p class="status" id="status" role="status">This portfolio is private.</p>
+  </form>
+  <noscript><p class="status">Unlocking it needs JavaScript.</p></noscript>
+</main>
+
+<script type="application/json" id="vault">__VAULT__</script>
+<script>
+(() => {
+  const vault = JSON.parse(document.getElementById('vault').textContent);
+  const root = document.documentElement;
+  const form = document.getElementById('unlock');
+  const input = document.getElementById('pw');
+  const field = input.parentElement;
+  const status = document.getElementById('status');
+  const idle = status.textContent;
+
+  const bytes = b64 => Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+
+  // The derived key, never the password, and only for this tab. Storage can
+  // throw in private modes; then the visitor just types it again on reload.
+  const saved = {
+    get() { try { return sessionStorage.getItem('kv-key'); } catch (e) { return null; } },
+    set(v) { try { sessionStorage.setItem('kv-key', v); } catch (e) {} },
+    clear() { try { sessionStorage.removeItem('kv-key'); } catch (e) {} },
+  };
+
+  async function deriveKey(password) {
+    const material = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(password.normalize('NFC')), 'PBKDF2', false, ['deriveBits']);
+    return new Uint8Array(await crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: bytes(vault.salt), iterations: vault.iter }, material, 256));
+  }
+
+  // Rejects on a wrong key: GCM checks its tag before it hands anything back.
+  async function decrypt(rawKey) {
+    const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt']);
+    const page = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes(vault.iv) }, key, bytes(vault.data));
+    return new TextDecoder().decode(page);
+  }
+
+  // While this document is still parsing, document.open() does nothing and the
+  // write lands after the gate instead of replacing it. A remembered key
+  // decrypts that early, so every entry waits for load.
+  const loaded = new Promise(done => {
+    if (document.readyState === 'complete') done();
+    else addEventListener('load', done, { once: true });
+  });
+
+  // Written through the parser, so the page's own scripts run in order as if
+  // it had loaded normally.
+  async function enter(page) {
+    await loaded;
+    document.open();
+    document.write(page);
+    document.close();
+  }
+
+  function showForm() {
+    root.classList.remove('is-returning');
+    input.focus();
+  }
+
+  if (!(window.crypto && crypto.subtle)) {   // http on anything but localhost
+    showForm();
+    input.disabled = true;
+    status.textContent = 'This page only unlocks over https.';
+    return;
+  }
+
+  const key = saved.get();
+  if (key) decrypt(bytes(key)).then(enter, () => { saved.clear(); showForm(); });   // stale after a re-lock
+  else input.focus();   // autofocus is skipped when the link carries a #section
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!input.value || form.classList.contains('is-busy')) return;
+    form.classList.add('is-busy');
+    form.setAttribute('aria-busy', 'true');
+    try {
+      const rawKey = await deriveKey(input.value);
+      const page = await decrypt(rawKey);
+      saved.set(btoa(String.fromCharCode(...rawKey)));
+      root.classList.add('is-leaving');
+      setTimeout(() => enter(page), 200);
+    } catch (err) {
+      form.classList.remove('is-busy');
+      form.removeAttribute('aria-busy');
+      status.textContent = 'That password didn’t work.';
+      status.classList.add('is-error');
+      field.classList.remove('is-wrong');
+      void field.offsetWidth;   // restart the shake on a second miss
+      field.classList.add('is-wrong');
+      input.value = '';
+      input.focus();
+    }
+  });
+
+  input.addEventListener('input', () => {
+    status.textContent = idle;
+    status.classList.remove('is-error');
+  });
+})();
+</script>
+</body>
+</html>

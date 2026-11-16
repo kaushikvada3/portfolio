@@ -1,4 +1,6 @@
-# Deploys the portfolio (index.html + js/ + logos) to GitHub Pages.
+# Deploys the portfolio to GitHub Pages: the locked index.html and the résumé.
+# index.html is built locally by dev/lock-site.py with the chip scripts and
+# logos encrypted inside it, so neither is copied here.
 name: Deploy Portfolio to GitHub Pages
 
 on:
@@ -8,10 +10,7 @@ on:
       - eda-tool-theme
     paths:
       - 'index.html'
-      - 'js/**'
-      - 'assets/logos/**'
       - 'resume.pdf'
-      - 'og-image.png'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -37,10 +36,10 @@ jobs:
 
       - name: Prepare static site
         run: |
-          mkdir -p _site/js _site/assets/logos
-          cp index.html resume.pdf og-image.png _site/
-          cp js/*.js _site/js/
-          cp assets/logos/tenstorrent.svg assets/logos/arm.svg _site/assets/logos/
+          # never publish an unlocked page
+          grep -q '<script type="application/json" id="vault">' index.html
+          mkdir -p _site
+          cp index.html resume.pdf _site/
           touch _site/.nojekyll
 
       - name: Upload Pages artifact

@@ -27,3 +27,9 @@ You are designing this portfolio as if you were an Apple senior UI engineer. Eve
 - If something feels busy, remove elements — don't restyle them
 - Question every border, shadow, and decoration — earn its place
 - Prefer clean and minimal over decorated and complex
+
+## Site lock
+- `index.html` is generated ciphertext behind a password screen. Never edit it by hand.
+- Edit `index.source.html` instead. It is gitignored, so search tools that respect `.gitignore` skip it.
+- After any change to `index.source.html`, `js/` or `assets/logos/`, run `python3 dev/lock-site.py` and commit the new `index.html`.
+- The lock screen itself is `dev/gate.html`.
