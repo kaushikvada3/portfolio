@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Kaushik Vada — Physical Design</title>
-<meta name="description" content="Kaushik Vada — Physical Design Intern at Tenstorrent and Electrical Engineering student at UC Riverside. Static timing, power, and the path from RTL to GDS." />
+<meta name="description" content="Kaushik Vada — Physical Design Intern at Tenstorrent, previously Arm. Static timing, power, and the path from RTL to GDS." />
 <meta name="author" content="Kaushik Vada" />
 <meta name="theme-color" content="#000000" />
 <link rel="canonical" href="https://kaushikvada.com/" />
@@ -284,9 +284,9 @@
 
   /* Logo row: metadata tier, never louder than the name above it.
      Heights are area-normalized (h ∝ 1/√aspect), then trimmed by measured
-     ink so no mark outweighs the others (Arm 1.04, UCR 0.93, overline
-     removed from the UCR file). --lu is Tenstorrent's height. Files may
-     fail to load: a failed image becomes the company name in type. */
+     ink so no mark outweighs the other (Arm 1.04). --lu is Tenstorrent's
+     height. Files may fail to load: a failed image becomes the company
+     name in type. */
   .hero-logos {
     --lu: 1.375rem;
     margin-top: var(--s6);
@@ -304,7 +304,6 @@
   .hero-logos img { display: block; width: auto; filter: brightness(0) invert(1); }
   .logo-tt { height: var(--lu); }
   .logo-arm { height: calc(var(--lu) * 1.04); }
-  .logo-ucr { height: calc(var(--lu) * 0.93); }
   .logo-type { font-family: var(--mono); font-size: var(--fs-meta); letter-spacing: 0.02em; line-height: 1.45; }
   /* Without script a missing file can't be detected, so the row is set in type. */
   .logo-nojs { display: none; }
@@ -491,7 +490,6 @@
      Empty without JS, so they only take space when a component mounts. */
   .js .chip-host { margin-top: var(--s7); }
   .co { scroll-margin-top: calc(var(--s7) - 1rem); }
-  .edu { scroll-margin-top: calc(var(--s5) - 1rem); }
 
   /* ───────────────────────── Project ───────────────────────── */
   .project { padding-block: var(--section-y); text-align: center; }
@@ -502,7 +500,7 @@
   .js .die { margin: var(--s7) auto 0; max-width: 56rem; }
   .project .points { margin-inline: auto; text-align: left; }
 
-  /* ───────────────────────── Skills + education ───────────────────────── */
+  /* ───────────────────────── Skills ───────────────────────── */
   .skills { padding-block: var(--section-y); }
   .skills .meta.eyebrow { margin-bottom: var(--s3); }
   .skills-grid {
@@ -519,42 +517,6 @@
   .skill-group li + li { margin-top: 0.625rem; }
   .skill-group .vendor { margin-top: var(--s4); margin-bottom: 0.625rem; font-size: 0.75rem; color: rgba(255, 255, 255, 0.46); }
   .skill-group .vendor:first-of-type { margin-top: 0; }
-
-  .edu {
-    margin-top: var(--s8);
-    background: var(--surface);
-    border-radius: var(--r-tile);
-    padding: clamp(1.5rem, 4.5vw, 3.5rem);
-    display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-    gap: var(--s6) var(--s7);
-  }
-  .edu-school {
-    margin-top: var(--s3);
-    font-size: 1.75rem;
-    font-weight: 600; line-height: 1.12; letter-spacing: -0.022em;
-    color: var(--ink-1);
-  }
-  .edu-degree {
-    margin-top: var(--s3);
-    font-size: var(--fs-title); font-weight: 500; line-height: 1.35; letter-spacing: -0.01em;
-    color: var(--ink-2);
-  }
-  .edu .when { margin-top: var(--s3); }
-  .edu-gpa { align-self: end; }
-  .edu-gpa .val {
-    margin-top: var(--s2);
-    font-size: clamp(1.75rem, 2.6vw, 2.25rem); font-weight: 600; line-height: 1.1; letter-spacing: -0.02em;
-    color: var(--ink-1); font-variant-numeric: tabular-nums;
-  }
-  .edu-gpa .of { color: var(--ink-3); }
-  .edu-honor { margin-top: var(--s3); font-size: var(--fs-body); line-height: 1.45; color: var(--ink-2); }
-  .edu-course { grid-column: 1 / -1; border-top: 1px solid var(--hair); padding-top: var(--s4); }
-  .edu-course ul {
-    margin-top: var(--s3);
-    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.625rem var(--s5);
-  }
-  .edu-course li { font-size: 1rem; line-height: 1.4; color: var(--ink-body); }
 
   /* ───────────────────────── Contact ───────────────────────── */
   .contact { padding-block: var(--section-y) calc(var(--section-y) * 0.8); text-align: center; }
@@ -598,8 +560,6 @@
   }
   @media (max-width: 47.99rem) {
     .lede { margin-top: var(--s7); }
-    .edu { grid-template-columns: minmax(0, 1fr); }
-    .edu-course ul { grid-template-columns: minmax(0, 1fr); }
     .paddles { display: none; }
     .stat-pair { grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
     .stat-pair .stat { font-size: var(--fs-stat); }
@@ -608,8 +568,6 @@
     .hero-logos { --lu: 1.125rem; gap: var(--s3) var(--s5); }
     .foot .wrap { flex-direction: column; align-items: flex-start; }
     .hero-title { font-size: min(23vw, 7rem); }
-    .hero-meta .sep-last { display: none; }
-    .hero-meta .school { display: block; }
     .mp-sep { display: none; }
     .mp-b { display: block; }
     .tile { min-height: 0; justify-content: flex-start; }
@@ -619,8 +577,8 @@
   @media (max-width: 29.99rem) {
     .skills-grid { grid-template-columns: minmax(0, 1fr); }
   }
-  /* 320–359px (SE 1st gen, Fold and Flip covers): the three marks share one
-     row, and the metadata sets as three clean lines, never a dangling dot. */
+  /* 320–359px (SE 1st gen, Fold and Flip covers): the two marks share one
+     row, and the metadata sets as two clean lines, never a dangling dot. */
   @media (max-width: 22.49rem) {
     .hero-logos { --lu: 1rem; gap: var(--s3) var(--s4); }
     .hero-meta .sep { display: none; }
@@ -688,7 +646,7 @@
     .localnav { background: #000; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: 0 1px 0 var(--hair); }
     .localnav::after { display: none; }
     .ln-panel { background: #000; -webkit-backdrop-filter: none; backdrop-filter: none; border-bottom: 1px solid var(--hair); }
-    .tile, .edu { box-shadow: inset 0 0 0 1px var(--hair); }
+    .tile { box-shadow: inset 0 0 0 1px var(--hair); }
     .paddle { background: #000; box-shadow: inset 0 0 0 1px var(--hair); }
     .hero-logos a { opacity: 0.8; }
     .hero-logos a:focus-visible { opacity: 1; }
@@ -714,8 +672,7 @@
     .gallery { overflow: visible; margin-top: var(--s5); }
     .track { transform: none !important; flex-wrap: wrap; padding-inline: max(var(--gutter), (100% - var(--maxw)) / 2); }
     .tile { flex: 1 1 100%; min-height: 0; break-inside: avoid; box-shadow: inset 0 0 0 1px var(--hair); }
-    .edu { box-shadow: inset 0 0 0 1px var(--hair); break-inside: avoid; }
-    .skill-group, .points li, .edu-course { break-inside: avoid; }
+    .skill-group, .points li { break-inside: avoid; }
     .h2, .exp-head, .co, .role, .lede, .skills .eyebrow, .project .meta { break-after: avoid; }
     /* Live illustrations are screen-only; paper keeps the words and figures. */
     .rtl-story, .chip-host, .die { display: none !important; }
@@ -776,11 +733,10 @@
       <div class="hero-inner wrap">
         <h1 id="hero-title" class="hero-title" data-rise><span>Kaushik</span> <span>Vada.</span></h1>
         <p class="hero-sub" data-rise>Static timing, power, and the path from RTL to GDS.</p>
-        <p class="hero-meta meta" data-rise><span class="nw">Physical Design Intern</span> <span class="sep" aria-hidden="true">·</span> <span class="nw">Tenstorrent</span><span class="sep-last"> <span class="sep" aria-hidden="true">·</span> </span><span class="nw school">EE @ UC Riverside</span></p>
-        <ul class="hero-logos" aria-label="Where I’ve worked and studied" data-rise>
+        <p class="hero-meta meta" data-rise><span class="nw">Physical Design Intern</span> <span class="sep" aria-hidden="true">·</span> <span class="nw">Tenstorrent</span></p>
+        <ul class="hero-logos" aria-label="Where I’ve worked" data-rise>
           <li><a href="#co-tt" aria-label="Tenstorrent — experience" data-press><img class="logo-tt" src="assets/logos/tenstorrent.svg" alt="Tenstorrent"><span class="logo-type logo-nojs" aria-hidden="true">Tenstorrent</span></a></li>
           <li><a href="#co-arm" aria-label="Arm — experience" data-press><img class="logo-arm" src="assets/logos/arm.svg" alt="Arm"><span class="logo-type logo-nojs" aria-hidden="true">Arm</span></a></li>
-          <li><a href="#education" aria-label="UC Riverside — education" data-press><img class="logo-ucr" src="assets/logos/ucr.svg" alt="UC Riverside"><span class="logo-type logo-nojs" aria-hidden="true">UC Riverside</span></a></li>
         </ul>
       </div>
     </div>
@@ -930,7 +886,7 @@
     </div>
   </section>
 
-  <!-- ═════════ Skills + education ═════════ -->
+  <!-- ═════════ Skills ═════════ -->
   <section id="skills" class="skills" aria-labelledby="skills-title">
     <div class="wrap">
       <p class="meta eyebrow">Skills</p>
@@ -961,31 +917,6 @@
         <div class="skill-group">
           <h3 class="meta">Protocols</h3>
           <ul><li>UART</li><li>APB</li><li>Valid/Ready Handshake</li></ul>
-        </div>
-      </div>
-
-      <div class="edu" id="education" role="group" aria-labelledby="edu-title">
-        <div>
-          <h3 class="meta">Education</h3>
-          <p class="edu-school" id="edu-title">University of California, Riverside</p>
-          <p class="edu-degree">Bachelor of Science in Electrical Engineering</p>
-          <p class="meta when"><span class="nw">August 2023 – June 2027</span><span class="mp-sep"> <span aria-hidden="true">·</span> </span><span class="nw mp-b">Riverside, CA</span></p>
-        </div>
-        <div class="edu-gpa">
-          <h4 class="meta">GPA</h4>
-          <p class="val">3.93<span class="of">/4.00</span></p>
-          <p class="edu-honor">University of California Regents Distinguished Scholar</p>
-        </div>
-        <div class="edu-course">
-          <h4 class="meta">Relevant coursework</h4>
-          <ul>
-            <li>Introduction to VLSI</li>
-            <li>Data Structures and Algorithms</li>
-            <li>Design and Architecture of Computer Systems</li>
-            <li>Machine Organization and Assembly Language</li>
-            <li>Digital Logic Design</li>
-            <li>GPU Architecture and Programming</li>
-          </ul>
         </div>
       </div>
     </div>
