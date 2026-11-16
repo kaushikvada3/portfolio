@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Write — Kaushik Vada</title>
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#000000" />
+<meta name="color-scheme" content="dark" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Crect x='7.5' y='7.5' width='17' height='17' fill='none' stroke='%23fff' stroke-opacity='.9' stroke-width='1.6'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23E0B96C'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="/blog/blog.css" />
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M8 16L16 8M9.5 8H16v6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<nav class="localnav" aria-label="Editor">
+  <!-- Library / sign-in bar -->
+  <div class="wrap ln-in" id="bar-main">
+    <a class="ln-title" href="/blog/write/">Write</a>
+    <div class="ln-right">
+      <a class="ln-link" href="/blog/" target="_blank" rel="noopener">View blog<svg class="icon" aria-hidden="true"><use href="#i-out"/></svg><span class="sr-only"> (opens in a new tab)</span></a>
+      <button class="ln-link" type="button" id="sign-out" hidden>Sign out</button>
+    </div>
+  </div>
+  <!-- Editing bar -->
+  <div class="wrap ln-in ed-bar" id="bar-edit" hidden>
+    <button class="ln-link" type="button" id="back" data-press><svg class="icon" aria-hidden="true"><use href="#i-left"/></svg>Posts</button>
+    <div class="ln-right">
+      <div class="seg" role="group" aria-label="Mode">
+        <button type="button" id="mode-write" aria-pressed="true">Write</button>
+        <button type="button" id="mode-preview" aria-pressed="false">Preview</button>
+      </div>
+      <button class="pill pill-sm" type="button" id="publish" data-press>Publish</button>
+    </div>
+  </div>
+</nav>
+
+<main id="main" tabindex="-1">
+  <!-- Signed out, or signed in with an account that can't write -->
+  <section class="wrap gate" id="gate" hidden>
+    <h1 class="h2" data-rise id="gate-title">Write.</h1>
+    <p class="section-sub" data-rise id="gate-sub">Sign in to write and publish posts.</p>
+    <button class="pill pill-lg" type="button" id="sign-in" data-rise data-press>Continue with Google</button>
+    <p class="meta" id="gate-msg" role="status"></p>
+  </section>
+
+  <!-- Every post, drafts included -->
+  <section class="wrap" id="library" hidden aria-labelledby="lib-title">
+    <header class="page-head lib-head">
+      <h1 id="lib-title" class="h2" data-rise>Posts.</h1>
+      <button class="pill pill-sm" type="button" id="new-post" data-rise data-press>New post</button>
+    </header>
+    <ul class="posts" aria-label="Posts"></ul>
+    <p class="meta quiet" id="lib-msg" hidden></p>
+  </section>
+
+  <!-- The page you write on -->
+  <section class="wrap editor" id="editor" hidden aria-label="Editor">
+    <p class="meta ed-status" id="status" role="status"></p>
+    <div id="pane-write">
+      <label class="sr-only" for="title">Title</label>
+      <textarea class="ed-field ed-title" id="title" rows="1" placeholder="Title" spellcheck="true"></textarea>
+      <label class="meta ed-slug"><span>/blog/?p=</span><input id="slug" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Link" /></label>
+      <div class="prose ed-blocks" id="blocks" aria-label="Post"></div>
+    </div>
+    <div id="pane-preview" class="ed-preview" hidden>
+      <p class="meta" id="pv-meta"></p>
+      <h1 class="post-title" id="pv-title"></h1>
+      <div class="prose" id="pv-body"></div>
+    </div>
+    <div class="ed-foot">
+      <button class="meta text-btn" type="button" id="unpublish" hidden>Unpublish</button>
+      <button class="meta text-btn" type="button" id="delete">Delete post</button>
+    </div>
+  </section>
+</main>
+
+<script src="/js/spring.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/editorjs@2.31.7/dist/editorjs.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/header@2.8.9/dist/header.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/list@2.0.9/dist/editorjs-list.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/quote@2.7.6/dist/quote.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/code@2.9.4/dist/code.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/delimiter@1.4.2/dist/delimiter.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@editorjs/inline-code@1.5.2/dist/inline-code.umd.js"></script>
+<script type="module" src="/blog/write/write.js"></script>
+</body>
+</html>

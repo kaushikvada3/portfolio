@@ -10,6 +10,7 @@ on:
       - eda-tool-theme
     paths:
       - 'index.html'
+      - 'blog/**'
       - 'resume.pdf'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
@@ -40,6 +41,8 @@ jobs:
           grep -q '<script type="application/json" id="vault">' index.html
           mkdir -p _site
           cp index.html resume.pdf _site/
+          cp -R blog _site/blog
+          mkdir -p _site/js && cp js/spring.js _site/js/   # blog pages load /js/spring.js
           touch _site/.nojekyll
 
       - name: Upload Pages artifact

@@ -1,0 +1,13 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Kaushik Vada Blog",
+        "supportEmail": "kaushikvada3@gmail.com"
+      }
+    }
+  }
+}

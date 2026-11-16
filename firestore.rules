@@ -1,0 +1,35 @@
+rules_version = '2';
+
+// Blog. Anyone can read a published post and fetch a photo by its id (the
+// blog is unlisted, not secret); only the owner's verified Google account can
+// see drafts, list photos, or write anything.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == 'kaushikvada3@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    match /posts/{postId} {
+      allow read: if isOwner() || resource.data.status == 'published';
+      allow create, update: if isOwner()
+        && request.resource.data.status in ['draft', 'published']
+        && request.resource.data.title is string
+        && request.resource.data.slug is string
+        && request.resource.data.content is map;
+      allow delete: if isOwner();
+    }
+
+    // Photos are stored as bytes, one per document, and never edited in place.
+    match /images/{imageId} {
+      allow get: if true;
+      allow list: if isOwner();
+      allow create: if isOwner()
+        && request.resource.data.bytes is bytes
+        && request.resource.data.bytes.size() <= 1000000
+        && request.resource.data.type in ['image/webp', 'image/jpeg'];
+      allow delete: if isOwner();
+    }
+  }
+}
